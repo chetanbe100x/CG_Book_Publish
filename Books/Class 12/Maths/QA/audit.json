@@ -1,0 +1,534 @@
+{
+  "approved_reference": {
+    "broken_relationships": [],
+    "external_relationships": [
+      {
+        "id": "rId12",
+        "relationships_part": "word/_rels/document.xml.rels",
+        "target": "mailto:lseh@lsds.M",
+        "type": "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
+      }
+    ],
+    "features": {
+      "bookmarks": 1,
+      "cells": 0,
+      "drawings": 0,
+      "explicit_page_breaks": 0,
+      "field_chars": 0,
+      "field_instructions": [],
+      "fixed_row_heights": 0,
+      "font_sizes_points": [
+        14.0,
+        16.0,
+        18.0,
+        20.0
+      ],
+      "fonts": [
+        "Calibri",
+        "Cambria Math",
+        "Courier New",
+        "Georgia",
+        "Kruti Dev 010",
+        "Nirmala UI",
+        "Tahoma",
+        "Times New Roman"
+      ],
+      "geometry": [
+        {
+          "bottom_twips": "1260",
+          "height_twips": "16838",
+          "left_twips": "1440",
+          "orientation": "portrait",
+          "right_twips": "1440",
+          "top_twips": "1440",
+          "width_twips": "11906"
+        }
+      ],
+      "hyperlinks": 1,
+      "last_rendered_page_breaks": 74,
+      "media_parts": 1,
+      "num_properties": 114,
+      "omath": 367,
+      "omath_paragraphs": 6,
+      "paragraphs": 1147,
+      "pictures": 0,
+      "rows": 0,
+      "runs": 3909,
+      "section_count": 1,
+      "simple_fields": 0,
+      "tables": 0,
+      "text_nodes": 3662,
+      "unsupported_or_review_features": [],
+      "used_num_ids": [
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77
+      ],
+      "used_style_ids": [
+        "Hyperlink",
+        "ListParagraph"
+      ],
+      "visible_text_characters": 127474,
+      "visible_token_count": 4297,
+      "visible_tokens_sha256": "4B9AD03757AE2007309F2D1D18BC4FA31C2801573A430891B36166CAAC0FFD4C",
+      "vml_elements": 20,
+      "vml_shapes": 18
+    },
+    "invalid_xml_parts": [],
+    "package_part_count": 21,
+    "parts": [
+      {
+        "path": "[Content_Types].xml",
+        "sha256": "BB20CA5F86B2A6EDA78FCAFA41C2C782212A2F5BAFC1DC326AD056224F188AFE",
+        "size": 2147
+      },
+      {
+        "path": "_rels/.rels",
+        "sha256": "E19238D7A71FA7A2490776252686F70E2DE6238C87CD509B5E3A3CC07C2EA4DF",
+        "size": 590
+      },
+      {
+        "path": "customXml/_rels/item1.xml.rels",
+        "sha256": "80482F86E196171D66001E0E74D1900408A3AAF2463E54005D251B5F2DB9A0B0",
+        "size": 296
+      },
+      {
+        "path": "customXml/item1.xml",
+        "sha256": "6484D95A7EB59C4BEAC874CC1FAE10B7F7F4CFB7CAEB09DFC375AD3AC4AD6BA0",
+        "size": 306
+      },
+      {
+        "path": "customXml/itemProps1.xml",
+        "sha256": "7C7CB48895DCACCED98D1D5CD155030DE26F2AA1ADEF39BB5406B9EDAFC114B1",
+        "size": 341
+      },
+      {
+        "path": "docProps/app.xml",
+        "sha256": "5B6B8E2BBADA0F501447A95F87BC76D02640E193735635A0CBFAA8E15C9218E1",
+        "size": 977
+      },
+      {
+        "path": "docProps/core.xml",
+        "sha256": "1AE7D2CE0C8C788BB7FA0F05D009F0D8DA23EF107E6877CBA9D93E701B4BA132",
+        "size": 807
+      },
+      {
+        "path": "word/_rels/document.xml.rels",
+        "sha256": "6D769E65C60B0769B8CDFBB55B884283D70EB9CC3C70E8DBCBB5D28294417B7B",
+        "size": 1774
+      },
+      {
+        "path": "word/_rels/header1.xml.rels",
+        "sha256": "94BCA6AEC3177C3B64686E1248ECFB39E9750DC067C2274AF33E6B442D1F6617",
+        "size": 289
+      },
+      {
+        "path": "word/document.xml",
+        "sha256": "AC4167DDFFEB17CA7EBA71114946EB8569628964E8CB4E9C4183ABD4F0CBF2C4",
+        "size": 1385267
+      },
+      {
+        "path": "word/endnotes.xml",
+        "sha256": "FE1800343F973BF237668706F49BB0324EF0463BF99ED49593AD998A3BCF5C72",
+        "size": 3190
+      },
+      {
+        "path": "word/fontTable.xml",
+        "sha256": "EFD393FB90AACDA6C778334B58C5BFEF8FF0E6E99195DBFF9C74B258174A7A7C",
+        "size": 4980
+      },
+      {
+        "path": "word/footer1.xml",
+        "sha256": "039EACDDE73B1BCF3C6F71F7207FA2E9D3E39F2727152B3E454BA9A5B9A41D45",
+        "size": 4482
+      },
+      {
+        "path": "word/footnotes.xml",
+        "sha256": "AE09EBC7C811B0CE2E881FD99DE3029EAAC667CE7EF841CDBC6205ED16C18CDD",
+        "size": 3196
+      },
+      {
+        "path": "word/header1.xml",
+        "sha256": "6D10CA75A3B5359FC6F4B1F872748895CA26BFF17BBE8B844F273CB926B82140",
+        "size": 6602
+      },
+      {
+        "path": "word/media/image1.png",
+        "sha256": "C05E9E9AFA65124F1169C2A5BC40A4AD354563F2151D32C9BD32A813C94E01D9",
+        "size": 76836
+      },
+      {
+        "path": "word/numbering.xml",
+        "sha256": "9F297122C29FBCAA78611CD737DE04E1AA3AAD91A458E8BB3965F108448CFBD1",
+        "size": 172725
+      },
+      {
+        "path": "word/settings.xml",
+        "sha256": "8AFAB82AE87DC99418EB3F1B452C8FA245D37977B158159D70EF1A0E736484DD",
+        "size": 38488
+      },
+      {
+        "path": "word/styles.xml",
+        "sha256": "73F25E395129664FDF90C0692D3C7E1470E09DE477C8EBC272DB587CF731DFBD",
+        "size": 48657
+      },
+      {
+        "path": "word/theme/theme1.xml",
+        "sha256": "946A60B310B2CF9BA0CC3B3C3A56FD1B874B865A60F0E8214ADB6C52B653EEDA",
+        "size": 7317
+      },
+      {
+        "path": "word/webSettings.xml",
+        "sha256": "4D382037FFF1EECAE928F7DBFA831BB734A1E540F72822CD873C831633A911B7",
+        "size": 11461
+      }
+    ],
+    "path": "D:\\Experiments_Projects\\CG_Book_Publish\\12 CLASS MATHS - Book Template.docx",
+    "relationships_part_count": 4,
+    "settings": {
+      "update_fields": false,
+      "update_fields_values": []
+    },
+    "sha256": "20397184A52E50C435AC7067DFCFED47E9A22BD7D4FD1A14C4DF8742C2B1DAAA",
+    "size": 137081
+  },
+  "generated_at": "2026-07-15T18:11:32+00:00",
+  "job": {
+    "class": "12",
+    "content_policy": "layout_only",
+    "job_id": "class-12-maths",
+    "preview_source_pages": 7,
+    "subject": "Maths",
+    "subject_profile": "science",
+    "typography_policy": "preserve_source"
+  },
+  "schema_version": 1,
+  "source": {
+    "broken_relationships": [],
+    "external_relationships": [
+      {
+        "id": "rId5",
+        "relationships_part": "word/_rels/document.xml.rels",
+        "target": "mailto:lseh@lsds.M",
+        "type": "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
+      }
+    ],
+    "features": {
+      "bookmarks": 1,
+      "cells": 0,
+      "drawings": 0,
+      "explicit_page_breaks": 0,
+      "field_chars": 0,
+      "field_instructions": [],
+      "fixed_row_heights": 0,
+      "font_sizes_points": [
+        14.0,
+        16.0,
+        18.0,
+        20.0
+      ],
+      "fonts": [
+        "Calibri",
+        "Cambria Math",
+        "Kruti Dev 010",
+        "Mangal",
+        "Nirmala UI",
+        "Tahoma",
+        "Times New Roman"
+      ],
+      "geometry": [
+        {
+          "bottom_twips": "720",
+          "height_twips": "16838",
+          "left_twips": "720",
+          "orientation": "portrait",
+          "right_twips": "720",
+          "top_twips": "720",
+          "width_twips": "11906"
+        }
+      ],
+      "hyperlinks": 1,
+      "last_rendered_page_breaks": 74,
+      "media_parts": 0,
+      "num_properties": 114,
+      "omath": 367,
+      "omath_paragraphs": 6,
+      "paragraphs": 1147,
+      "pictures": 0,
+      "rows": 0,
+      "runs": 3909,
+      "section_count": 1,
+      "simple_fields": 0,
+      "tables": 0,
+      "text_nodes": 3662,
+      "unsupported_or_review_features": [],
+      "used_num_ids": [
+        1,
+        2,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "used_style_ids": [
+        "Hyperlink",
+        "ListParagraph"
+      ],
+      "visible_text_characters": 127474,
+      "visible_token_count": 4297,
+      "visible_tokens_sha256": "4B9AD03757AE2007309F2D1D18BC4FA31C2801573A430891B36166CAAC0FFD4C",
+      "vml_elements": 20,
+      "vml_shapes": 18
+    },
+    "invalid_xml_parts": [],
+    "package_part_count": 12,
+    "parts": [
+      {
+        "path": "[Content_Types].xml",
+        "sha256": "75D26707C97B3643F183F01C63000570EC598C73234491FDA1ECDA9DE7B13143",
+        "size": 1445
+      },
+      {
+        "path": "_rels/.rels",
+        "sha256": "E19238D7A71FA7A2490776252686F70E2DE6238C87CD509B5E3A3CC07C2EA4DF",
+        "size": 590
+      },
+      {
+        "path": "docProps/app.xml",
+        "sha256": "3C9D0A1CCD4567F684D315EC37A4ACB784947158E4B069020A9251DE30D5565F",
+        "size": 723
+      },
+      {
+        "path": "docProps/core.xml",
+        "sha256": "83289B38AE17A2661A2E8DF3460B1C91EE9B77FAED6893F66CF5CF5931FC2062",
+        "size": 629
+      },
+      {
+        "path": "word/_rels/document.xml.rels",
+        "sha256": "17DFB951B26B6E72473739DDEDE91803CF337D952B74847259683B40A92E5D31",
+        "size": 1110
+      },
+      {
+        "path": "word/document.xml",
+        "sha256": "08F79922E6B411FBDB25919F6E24FBC09B431D6E4A4CDB24107BB5600ACA809C",
+        "size": 1383038
+      },
+      {
+        "path": "word/fontTable.xml",
+        "sha256": "2072A1CBBF2884B23C9650B7DB6EE90DE322DC8D3E732AC165DF46AD44D76F95",
+        "size": 3221
+      },
+      {
+        "path": "word/numbering.xml",
+        "sha256": "0BDDDDED181AE8419611CAA37A3589843CB8D8BDF4EDF0F201708332DDCA6D55",
+        "size": 21017
+      },
+      {
+        "path": "word/settings.xml",
+        "sha256": "E747F83C22E6DA244E735023615063F41E355B05AD363A4D6C185447ED06AFF3",
+        "size": 2829
+      },
+      {
+        "path": "word/styles.xml",
+        "sha256": "B38A2F425E33CD23A4CA44CD15A65BDFDCC55395C39DE7E57D0D936C828A202F",
+        "size": 30044
+      },
+      {
+        "path": "word/theme/theme1.xml",
+        "sha256": "BF4992E3FA7832E5C68FDBC4EC5189C8E5D347FEF03C5BA2522AD704BDE5078F",
+        "size": 6992
+      },
+      {
+        "path": "word/webSettings.xml",
+        "sha256": "CBC26FA167E8052D5DDFB37BD843233F1E61843CCE11C730CA50B27AFC60CF93",
+        "size": 260
+      }
+    ],
+    "path": "D:\\Experiments_Projects\\CG_Book_Publish\\Books\\Class 12\\Maths\\Input\\12 CLASS MATHS.docx",
+    "relationships_part_count": 2,
+    "settings": {
+      "update_fields": false,
+      "update_fields_values": []
+    },
+    "sha256": "0E01F2BD42A52D6D9E5AF2E9B3E6B2270192C42F8B64B84534A0CCF0CC72A8E5",
+    "size": 86594
+  },
+  "template": {
+    "broken_relationships": [],
+    "external_relationships": [],
+    "features": {
+      "bookmarks": 0,
+      "cells": 0,
+      "drawings": 0,
+      "explicit_page_breaks": 0,
+      "field_chars": 0,
+      "field_instructions": [],
+      "fixed_row_heights": 0,
+      "font_sizes_points": [],
+      "fonts": [
+        "Calibri",
+        "Courier New",
+        "Georgia",
+        "Tahoma",
+        "Times New Roman"
+      ],
+      "geometry": [
+        {
+          "bottom_twips": "1260",
+          "height_twips": "16838",
+          "left_twips": "1440",
+          "orientation": "portrait",
+          "right_twips": "1440",
+          "top_twips": "1440",
+          "width_twips": "11906"
+        }
+      ],
+      "hyperlinks": 0,
+      "last_rendered_page_breaks": 0,
+      "media_parts": 1,
+      "num_properties": 0,
+      "omath": 0,
+      "omath_paragraphs": 0,
+      "paragraphs": 1,
+      "pictures": 0,
+      "rows": 0,
+      "runs": 0,
+      "section_count": 1,
+      "simple_fields": 0,
+      "tables": 0,
+      "text_nodes": 0,
+      "unsupported_or_review_features": [],
+      "used_num_ids": [],
+      "used_style_ids": [],
+      "visible_text_characters": 0,
+      "visible_token_count": 0,
+      "visible_tokens_sha256": "4F53CDA18C2BAA0C0354BB5F9A3ECBE5ED12AB4D8E11BA873C2F11161202B945",
+      "vml_elements": 0,
+      "vml_shapes": 0
+    },
+    "invalid_xml_parts": [],
+    "package_part_count": 21,
+    "parts": [
+      {
+        "path": "[Content_Types].xml",
+        "sha256": "BB20CA5F86B2A6EDA78FCAFA41C2C782212A2F5BAFC1DC326AD056224F188AFE",
+        "size": 2147
+      },
+      {
+        "path": "_rels/.rels",
+        "sha256": "E19238D7A71FA7A2490776252686F70E2DE6238C87CD509B5E3A3CC07C2EA4DF",
+        "size": 590
+      },
+      {
+        "path": "customXml/_rels/item1.xml.rels",
+        "sha256": "80482F86E196171D66001E0E74D1900408A3AAF2463E54005D251B5F2DB9A0B0",
+        "size": 296
+      },
+      {
+        "path": "customXml/item1.xml",
+        "sha256": "6484D95A7EB59C4BEAC874CC1FAE10B7F7F4CFB7CAEB09DFC375AD3AC4AD6BA0",
+        "size": 306
+      },
+      {
+        "path": "customXml/itemProps1.xml",
+        "sha256": "7C7CB48895DCACCED98D1D5CD155030DE26F2AA1ADEF39BB5406B9EDAFC114B1",
+        "size": 341
+      },
+      {
+        "path": "docProps/app.xml",
+        "sha256": "5B6B8E2BBADA0F501447A95F87BC76D02640E193735635A0CBFAA8E15C9218E1",
+        "size": 977
+      },
+      {
+        "path": "docProps/core.xml",
+        "sha256": "1AE7D2CE0C8C788BB7FA0F05D009F0D8DA23EF107E6877CBA9D93E701B4BA132",
+        "size": 807
+      },
+      {
+        "path": "word/_rels/document.xml.rels",
+        "sha256": "32A198EDE26C7C2C56610626DBB9F196E778DFD92F1AD766CF1791D4738C9C05",
+        "size": 1614
+      },
+      {
+        "path": "word/_rels/header1.xml.rels",
+        "sha256": "94BCA6AEC3177C3B64686E1248ECFB39E9750DC067C2274AF33E6B442D1F6617",
+        "size": 289
+      },
+      {
+        "path": "word/document.xml",
+        "sha256": "35D2786E6A3A4C11E319E72ACAB7974443FCF89ECA3152931D694E14AA0F2EFD",
+        "size": 3191
+      },
+      {
+        "path": "word/endnotes.xml",
+        "sha256": "FE1800343F973BF237668706F49BB0324EF0463BF99ED49593AD998A3BCF5C72",
+        "size": 3190
+      },
+      {
+        "path": "word/fontTable.xml",
+        "sha256": "833B8C81C7561FA83DECFFC1DD1D4D4D9A7E75819AF4F6CDA799B50D6CA252EB",
+        "size": 3643
+      },
+      {
+        "path": "word/footer1.xml",
+        "sha256": "039EACDDE73B1BCF3C6F71F7207FA2E9D3E39F2727152B3E454BA9A5B9A41D45",
+        "size": 4482
+      },
+      {
+        "path": "word/footnotes.xml",
+        "sha256": "AE09EBC7C811B0CE2E881FD99DE3029EAAC667CE7EF841CDBC6205ED16C18CDD",
+        "size": 3196
+      },
+      {
+        "path": "word/header1.xml",
+        "sha256": "6D10CA75A3B5359FC6F4B1F872748895CA26BFF17BBE8B844F273CB926B82140",
+        "size": 6602
+      },
+      {
+        "path": "word/media/image1.png",
+        "sha256": "C05E9E9AFA65124F1169C2A5BC40A4AD354563F2151D32C9BD32A813C94E01D9",
+        "size": 76836
+      },
+      {
+        "path": "word/numbering.xml",
+        "sha256": "220DCA706511333DB7B30CC55CA8A7D776896E314304988F46BCD507DFCB005B",
+        "size": 154535
+      },
+      {
+        "path": "word/settings.xml",
+        "sha256": "8AFAB82AE87DC99418EB3F1B452C8FA245D37977B158159D70EF1A0E736484DD",
+        "size": 38488
+      },
+      {
+        "path": "word/styles.xml",
+        "sha256": "3969FFF17C82A9C4CE0F2DA21C20E8E809434B4DB6532A7B8D477D40446D48C7",
+        "size": 48322
+      },
+      {
+        "path": "word/theme/theme1.xml",
+        "sha256": "946A60B310B2CF9BA0CC3B3C3A56FD1B874B865A60F0E8214ADB6C52B653EEDA",
+        "size": 7317
+      },
+      {
+        "path": "word/webSettings.xml",
+        "sha256": "4D382037FFF1EECAE928F7DBFA831BB734A1E540F72822CD873C831633A911B7",
+        "size": 11461
+      }
+    ],
+    "path": "D:\\Experiments_Projects\\CG_Book_Publish\\Book_Template.docx",
+    "relationships_part_count": 4,
+    "settings": {
+      "update_fields": false,
+      "update_fields_values": []
+    },
+    "sha256": "FD6B76A7975CD3D72DEC61DD16511D3686A588E617B65090E936BCFBC9AA5261",
+    "size": 111411
+  }
+}

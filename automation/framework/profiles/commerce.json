@@ -1,0 +1,9 @@
+{
+  "profile": "commerce",
+  "audit_hints": [
+    "ledger and dense table geometry",
+    "tab stops and numeric alignment",
+    "landscape sections",
+    "repeating table headers"
+  ]
+}

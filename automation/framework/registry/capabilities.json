@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "capabilities": {
+    "typography": "preserve source fonts, sizes and direct formatting",
+    "equations": "inventory and preserve Word OMML",
+    "numbering": "copy referenced numbering definitions with collision remapping",
+    "tables": "inventory tables, rows, cells and fixed-height risks",
+    "images_vml": "copy relationship-backed parts and inventory VML/drawings",
+    "sections": "retain canonical template final section geometry",
+    "fields_links": "preserve relationships and disable automatic field updates"
+  }
+}

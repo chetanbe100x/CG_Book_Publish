@@ -1,0 +1,17 @@
+{
+  "job_id": "class-12-maths",
+  "class": "12",
+  "subject": "Maths",
+  "source": "Input/12 CLASS MATHS.docx",
+  "template": "../../../Book_Template.docx",
+  "preview_output": "Preview/Class 12 Maths - Template Preview.docx",
+  "final_output": "Final/Class 12 Maths - Book Template.docx",
+  "approved_reference": "../../../12 CLASS MATHS - Book Template.docx",
+  "qa_dir": "QA",
+  "preview_source_pages": 7,
+  "content_policy": "layout_only",
+  "typography_policy": "preserve_source",
+  "subject_profile": "science",
+  "adapter": null,
+  "required_fonts": []
+}

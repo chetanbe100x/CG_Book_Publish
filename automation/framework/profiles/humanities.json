@@ -1,0 +1,9 @@
+{
+  "profile": "humanities",
+  "audit_hints": [
+    "maps and linked images",
+    "multilevel lists",
+    "tables and long headings",
+    "captions and cross-references"
+  ]
+}

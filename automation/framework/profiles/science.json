@@ -1,0 +1,9 @@
+{
+  "profile": "science",
+  "audit_hints": [
+    "OMML equations",
+    "symbols and superscript/subscript formatting",
+    "VML, drawings, diagrams and captions",
+    "question numbering and answer lines"
+  ]
+}

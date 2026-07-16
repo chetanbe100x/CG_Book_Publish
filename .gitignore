@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDEs
+.idea/
+.vscode/
+
+# Temporary directories
+.render_tmp/

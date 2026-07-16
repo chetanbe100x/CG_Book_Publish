@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "jobs": [
+    {
+      "job_id": "class-12-maths",
+      "status": "approved_reference",
+      "source_sha256": "0E01F2BD42A52D6D9E5AF2E9B3E6B2270192C42F8B64B84534A0CCF0CC72A8E5",
+      "template_sha256": "FD6B76A7975CD3D72DEC61DD16511D3686A588E617B65090E936BCFBC9AA5261",
+      "approved_output_sha256": "20397184A52E50C435AC7067DFCFED47E9A22BD7D4FD1A14C4DF8742C2B1DAAA"
+    }
+  ]
+}

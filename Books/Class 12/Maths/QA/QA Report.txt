@@ -1,0 +1,21 @@
+Accuracy-First Book Conversion QA Report
+Generated: 2026-07-15T18:25:05+00:00
+Job: class-12-maths
+Class / Subject: 12 / Maths
+Stage: final
+Structural result: PASS
+
+Rendered pages: 101
+Render directory: D:\Experiments_Projects\CG_Book_Publish\Books\Class 12\Maths\QA\Final Render
+Visual review status: PASS; 101 pages inspected
+
+Approved regression: PASS
+
+Protected files:
+- Source: D:\Experiments_Projects\CG_Book_Publish\Books\Class 12\Maths\Input\12 CLASS MATHS.docx
+- Template: D:\Experiments_Projects\CG_Book_Publish\Book_Template.docx
+- Approved reference: D:\Experiments_Projects\CG_Book_Publish\12 CLASS MATHS - Book Template.docx
+
+Visual review (final): PASS
+Pages inspected: 101
+Notes: Inspected all 101 rendered pages using ordered page contact sheets, with full-page checks at the beginning and final page. Frames and dynamic page numbers repeat, content stays inside the frame, chapter transitions and answer lines are intact, equations and bilingual text are visible, and no clipping, overlap, blank-render failure, or visible font substitution was found.

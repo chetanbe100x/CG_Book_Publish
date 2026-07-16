@@ -1,0 +1,7 @@
+{
+  "notes": "Inspected every rendered preview page; decorative frame and page numbering repeat correctly, content remains within the frame, equations and Devanagari/Kruti Dev content render without visible substitution, and no clipping or overlap was found.",
+  "page_count": 9,
+  "passed": true,
+  "reviewed_at": "2026-07-15T18:21:13+00:00",
+  "stage": "preview"
+}

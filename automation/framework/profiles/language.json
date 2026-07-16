@@ -1,0 +1,9 @@
+{
+  "profile": "language",
+  "audit_hints": [
+    "legacy and complex-script fonts",
+    "Unicode and non-Unicode text",
+    "bidirectional or complex-script run properties",
+    "punctuation and glyph substitution"
+  ]
+}
