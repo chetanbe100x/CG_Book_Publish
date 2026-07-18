@@ -680,7 +680,7 @@ def _add_question(
     hindi_runs = block.get("hindi_runs")
     hindi = str(block.get("hindi", "")).strip()
     statement = question
-    if block.get("label_layout", "inline") == "standalone" and (
+    if False and block.get("label_layout", "inline") == "standalone" and (
         (isinstance(hindi_runs, list) and hindi_runs) or hindi
     ):
         statement = document.add_paragraph(style="Book Question")
