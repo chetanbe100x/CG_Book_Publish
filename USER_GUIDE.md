@@ -94,6 +94,17 @@ structural QA, and page-by-page visual QA. Do not run the full conversion.
 
 The PDF path is `PDF -> reviewed Book IR -> editable normalized DOCX -> existing composer`. The full conversion remains blocked until the Book IR scope is `full` and the preview hash is explicitly approved.
 
+### Dynamic Reflow & Mirrored Margins (Job Policies)
+
+For books that should dynamically reflow and use mirrored margins (e.g. Class 11 Maths), ensure the following properties are configured in the `job.json`:
+
+- `"source_style_policy": "content_only"`
+  - Treats the source as a content authority only, ignoring original font sizes, colors, and margins.
+  - Dynamically configures mirrored margins (`mirrorMargins`) and section dimensions based on the visual layout authority.
+- `"pagination_policy": "sample_flow"`
+  - Bypasses physical page-height locking and answer line presence/height target constraints to allow text and dotted lines to flow dynamically and paginate naturally.
+  - Requires a defined `"layout_reference"` (e.g., `"Input/Class 11 Maths - Printable Reference.docx"`).
+
 ## 5. Review the Preview
 
 Open the file in:
