@@ -8,10 +8,12 @@ from pathlib import Path
 from framework.core.audit import audit_job
 from framework.core.compose import compose, create_full, create_preview
 from framework.core.models import FrameworkError, JobConfig, StatusStore, sha256_file
-from framework.ingest.pdf import ingest_pdf_job
+from framework.ingest.extract import extract_book_ir_job
+from framework.ingest.pdf import ingest_pdf_job, validate_pdf_ingest_freshness
 from framework.qa.render import render_document
 from framework.qa.report import write_artifact, write_qa_report
 from framework.qa.structural import compare_with_approved, validate_output
+from framework.qa.visual import validate_word_visual_review
 
 
 def _print(value: object) -> None:
@@ -28,19 +30,21 @@ def command_audit(job: JobConfig) -> dict:
 
 def command_preview(job: JobConfig) -> dict:
     ingested = False
-    if (
-        job.source_type == "pdf"
-        and job.normalized_source is not None
-        and not job.normalized_source.is_file()
-    ):
-        ingest_pdf_job(job)
-        ingested = True
+    if job.source_type == "pdf":
+        assert job.normalized_source is not None
+        if not job.normalized_source.is_file():
+            ingest_pdf_job(job)
+            ingested = True
+        else:
+            validate_pdf_ingest_freshness(job)
     if ingested or not job.audit_path.exists():
         command_audit(job)
     return create_preview(job)
 
 
 def command_qa(job: JobConfig, stage: str) -> dict:
+    if stage == "preview":
+        StatusStore(job).require_current_preview_provenance()
     source_pages = job.preview_page_count if stage == "preview" else None
     document = job.docx_for_stage(stage)
     validation = (
@@ -95,11 +99,16 @@ def command_approve(job: JobConfig) -> dict:
     status = StatusStore(job).load()
     if status.get("state") != "preview_qa_passed":
         raise FrameworkError("Preview approval requires a passed preview QA run")
+    StatusStore(job).require_current_preview_provenance()
+    if job.render_authority == "word":
+        validate_word_visual_review(job, stage="preview")
     values = {
         "approved_preview_sha256": sha256_file(job.preview_output),
         "approved_source_sha256": sha256_file(job.source),
         "approved_template_sha256": sha256_file(job.template),
     }
+    if job.approved_reference is not None:
+        values["approved_reference_sha256"] = sha256_file(job.approved_reference)
     if job.normalized_source is not None:
         values["approved_normalized_source_sha256"] = sha256_file(
             job.normalized_source
@@ -107,6 +116,10 @@ def command_approve(job: JobConfig) -> dict:
     if job.content_manifest is not None:
         values["approved_content_manifest_sha256"] = sha256_file(
             job.content_manifest
+        )
+    if job.layout_reference is not None:
+        values["approved_layout_reference_sha256"] = sha256_file(
+            job.layout_reference
         )
     return StatusStore(job).transition(
         "preview_approved",
@@ -136,6 +149,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = root.add_subparsers(dest="command", required=True)
     for name in (
         "audit",
+        "extract",
         "ingest",
         "preview",
         "approve-preview",
@@ -157,6 +171,8 @@ def main() -> int:
         job = JobConfig.load(args.job)
         if args.command == "audit":
             result = command_audit(job)
+        elif args.command == "extract":
+            result = extract_book_ir_job(job)
         elif args.command == "ingest":
             result = ingest_pdf_job(job)
         elif args.command == "preview":

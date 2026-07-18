@@ -1,39 +1,47 @@
 {
-    "job_id":  "class-11-maths-pdf",
-    "class":  "11",
-    "subject":  "Maths",
-    "source_type":  "pdf",
-    "source":  "Input/Maths_11th.pdf",
-    "normalized_source":  "Work/Normalized Full Source.docx",
-    "content_manifest":  "Work/book_ir.full.json",
-    "template":  "../../../Book_Template.docx",
-    "preview_output":  "Preview/Class 11 Maths - Representative Preview v9.docx",
-    "final_output":  "Final/Class 11 Maths - Book Template.docx",
-    "approved_reference":  null,
-    "qa_dir":  "QA",
-    "preview_source_pages":  7,
-    "preview_source_page_numbers":  [
-                                        3,
-                                        19,
-                                        47,
-                                        64,
-                                        80,
-                                        98,
-                                        104
-                                    ],
-    "content_policy":  "reconstruct_content",
-    "typography_policy":  "mapped_pdf_fonts",
-    "boundary_strategy":  "explicit",
-    "pdf_font_map":  {
-                         "hindi":  "Nirmala UI",
-                         "latin":  "Arial",
-                         "math":  "Cambria Math"
-                     },
-    "subject_profile":  "maths",
-    "adapter":  "class_11_maths_pdf",
-    "required_fonts":  [
-                           "Nirmala UI",
-                           "Arial",
-                           "Cambria Math"
-                       ]
+  "job_id": "class-11-maths-pdf",
+  "class": "11",
+  "subject": "Maths",
+  "source_type": "pdf",
+  "source": "Input/Maths_11th.pdf",
+  "normalized_source": "Work/Normalized Print Source v1.docx",
+  "content_manifest": "Work/book_ir.full.json",
+  "template": "../../../Book_Template.docx",
+  "layout_reference": "Input/Class 11 Maths - Printable Reference.docx",
+  "preview_output": "Preview/Class 11 Maths - Print Ready Golden v1.docx",
+  "final_output": "Final/Class 11 Maths - Print Ready v1.docx",
+  "approved_reference": null,
+  "qa_dir": "QA",
+  "preview_source_pages": 8,
+  "preview_source_page_numbers": [
+    3,
+    14,
+    19,
+    47,
+    65,
+    80,
+    98,
+    104
+  ],
+  "content_page_ranges": [
+    [3, 104]
+  ],
+  "first_content_side": "recto",
+  "expected_page_count": 102,
+  "render_authority": "word",
+  "content_policy": "reconstruct_content",
+  "typography_policy": "mapped_pdf_fonts",
+  "boundary_strategy": "explicit",
+  "pdf_font_map": {
+    "hindi": "Nirmala UI",
+    "latin": "Arial",
+    "math": "Cambria Math"
+  },
+  "subject_profile": "maths",
+  "adapter": "class_11_maths_pdf",
+  "required_fonts": [
+    "Nirmala UI",
+    "Arial",
+    "Cambria Math"
+  ]
 }

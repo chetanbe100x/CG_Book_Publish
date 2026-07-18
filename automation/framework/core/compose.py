@@ -7,10 +7,11 @@ from typing import Any
 from lxml import etree
 
 from ..capabilities.typography import missing_fonts, referenced_fonts
-from .boundary import selected_body
+from .boundary import selected_body, selected_explicit_page_numbers
 from .dependencies import (
     RelationshipCopier,
     disable_automatic_field_updates,
+    disable_automatic_image_compression,
     merge_fonts,
     merge_numbering,
     merge_styles,
@@ -59,14 +60,26 @@ def _replace_template_body(
     template_body.append(final_section)
 
 
+def selected_composition_body(
+    job: JobConfig,
+    source_body: etree._Element,
+    source_pages: int | None,
+) -> etree._Element:
+    if (
+        source_pages is not None
+        and job.source_type == "pdf"
+        and job.preview_source_page_numbers
+    ):
+        return selected_explicit_page_numbers(
+            source_body, job.preview_source_page_numbers
+        )
+    return selected_body(source_body, source_pages, strategy=job.boundary_strategy)
+
+
 def compose(job: JobConfig, output: Path, source_pages: int | None) -> dict[str, Any]:
     source = DocxPackage(job.composition_source)
     template = DocxPackage(job.template)
-    selected = selected_body(
-        source.body(),
-        source_pages,
-        strategy=job.boundary_strategy,
-    )
+    selected = selected_composition_body(job, source.body(), source_pages)
     _fidelity_gate(selected)
     destination_parts = template.clone_parts()
     style_mapping, copied_styles = merge_styles(source, destination_parts, selected)
@@ -83,12 +96,17 @@ def compose(job: JobConfig, output: Path, source_pages: int | None) -> dict[str,
     _replace_template_body(template_document, selected)
     destination_parts["word/document.xml"] = xml_bytes(template_document)
     disable_automatic_field_updates(destination_parts)
+    disable_automatic_image_compression(destination_parts)
     write_new_docx(output, destination_parts)
     return {
         "output": str(output),
         "sha256": sha256_file(output),
         "source_pages": source_pages,
-        "source_page_numbers": list(job.preview_source_page_numbers),
+        "source_page_numbers": (
+            list(job.preview_source_page_numbers)
+            if source_pages is not None
+            else list(job.content_page_numbers)
+        ),
         "style_mapping": style_mapping,
         "numbering_mapping": numbering_mapping,
         "merged_fonts": merged_fonts,
@@ -103,6 +121,11 @@ def create_preview(job: JobConfig) -> dict[str, Any]:
         preview_sha256=result["sha256"],
         source_sha256=sha256_file(job.source),
         template_sha256=sha256_file(job.template),
+        approved_reference_sha256=(
+            sha256_file(job.approved_reference)
+            if job.approved_reference is not None
+            else None
+        ),
         normalized_source_sha256=(
             sha256_file(job.normalized_source)
             if job.normalized_source is not None
@@ -111,6 +134,11 @@ def create_preview(job: JobConfig) -> dict[str, Any]:
         content_manifest_sha256=(
             sha256_file(job.content_manifest)
             if job.content_manifest is not None
+            else None
+        ),
+        layout_reference_sha256=(
+            sha256_file(job.layout_reference)
+            if job.layout_reference is not None
             else None
         ),
     )

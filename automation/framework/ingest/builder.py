@@ -53,7 +53,8 @@ def _ensure_styles(document: Any, job: JobConfig) -> None:
         style.paragraph_format.space_before = Pt(0)
         style.paragraph_format.space_after = Pt(after)
         style.paragraph_format.line_spacing = line_spacing
-        style.paragraph_format.keep_together = True
+        style.paragraph_format.keep_together = None
+        style.paragraph_format.keep_with_next = None
 
 
 def _clear_template_body(document: Any) -> None:
@@ -120,7 +121,9 @@ def _add_bookmark(paragraph: Any, name: str, bookmark_id: int) -> None:
     start.set(qn("w:name"), name)
     end = OxmlElement("w:bookmarkEnd")
     end.set(qn("w:id"), str(bookmark_id))
-    paragraph._p.insert(0, start)
+    properties = paragraph._p.get_or_add_pPr()
+    properties_index = paragraph._p.index(properties)
+    paragraph._p.insert(properties_index + 1, start)
     paragraph._p.append(end)
 
 
@@ -163,7 +166,7 @@ def _add_dotted_bottom_border(paragraph: Any) -> None:
     if bottom is None:
         bottom = OxmlElement("w:bottom")
         borders.append(bottom)
-    bottom.set(qn("w:val"), "dot")
+    bottom.set(qn("w:val"), "dotted")
     bottom.set(qn("w:sz"), "4")
     bottom.set(qn("w:space"), "1")
     bottom.set(qn("w:color"), "B7B7B7")
@@ -176,10 +179,6 @@ def _add_answer_lines(document: Any, block: dict[str, Any]) -> list[Any]:
     for _ in range(count):
         paragraph = document.add_paragraph(style="Book Answer Line")
         paragraph.paragraph_format.space_after = Pt(max(1.0, spacing - 11.0))
-        paragraph.paragraph_format.tab_stops.add_tab_stop(
-            Inches(6.0), WD_TAB_ALIGNMENT.LEFT, WD_TAB_LEADER.DOTS
-        )
-        paragraph.add_run("\t")
         _add_dotted_bottom_border(paragraph)
         lines.append(paragraph)
     return lines
@@ -368,3 +367,10 @@ def build_normalized_docx(
         "page_count": len(manifest["pages"]),
         "source_pages": [int(page["source_page"]) for page in manifest["pages"]],
     }
+
+
+# Compatibility facade: callers keep the established import path while the
+# calibrated, profile-driven implementation lives in a focused module.
+from .print_builder import (  # noqa: E402
+    build_normalized_docx as build_normalized_docx,
+)

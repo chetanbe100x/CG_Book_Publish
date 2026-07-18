@@ -7,9 +7,10 @@ from lxml import etree
 
 from ..capabilities import equations, images_vml
 from ..core.audit import body_tokens
-from ..core.boundary import selected_body
+from ..core.compose import selected_composition_body
 from ..core.models import JobConfig, sha256_file
 from ..core.package import DocxPackage, NS, W, canonical_xml
+from .print_contract import validate_print_contract
 
 
 def _tokens_from_root(root: etree._Element) -> list[str]:
@@ -57,11 +58,7 @@ def validate_output(job: JobConfig, output: Path, source_pages: int | None) -> d
     source = DocxPackage(job.composition_source)
     template = DocxPackage(job.template)
     result = DocxPackage(output)
-    selected = selected_body(
-        source.body(),
-        source_pages,
-        strategy=job.boundary_strategy,
-    )
+    selected = selected_composition_body(job, source.body(), source_pages)
 
     expected_tokens = _tokens_from_root(selected)
     actual_tokens = body_tokens(output)
@@ -99,6 +96,14 @@ def validate_output(job: JobConfig, output: Path, source_pages: int | None) -> d
     if settings is not None and settings.find(".//w:updateFields", NS) is not None:
         errors.append("Automatic field updating is enabled")
 
+    print_contract = validate_print_contract(
+        job,
+        result,
+        stage="preview" if source_pages is not None else "final",
+        source_pages=source_pages,
+    )
+    errors.extend(print_contract["errors"])
+    warnings.extend(print_contract["warnings"])
     return {
         "passed": not errors,
         "output": str(output),
@@ -107,6 +112,7 @@ def validate_output(job: JobConfig, output: Path, source_pages: int | None) -> d
         "expected_counts": expected_counts,
         "actual_counts": actual_counts,
         "errors": errors,
+        "print_contract": print_contract,
         "warnings": warnings,
     }
 

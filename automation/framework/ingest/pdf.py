@@ -7,16 +7,25 @@ from typing import Any
 
 from pypdf import PdfReader
 
+from ..capabilities.typography import missing_fonts
 from ..core.models import (
     FrameworkError,
+    IntegrityError,
     JobConfig,
     StatusStore,
+    UnsupportedFeatureError,
     atomic_json_write,
     sha256_file,
     utc_now,
 )
 from .builder import build_normalized_docx
 from .ir import load_book_ir
+
+def effective_manifest_path(job: JobConfig) -> Path:
+    """Return the generated, adapter-enriched manifest used for composition."""
+
+    return job.qa_dir / "effective-manifest.json"
+
 
 
 def pdf_inventory(path: str | Path) -> dict[str, Any]:
@@ -134,17 +143,87 @@ def _validate_numbering_review(
     }
 
 
+def validate_pdf_ingest_freshness(job: JobConfig) -> dict[str, Any]:
+    """Fail unless the normalized DOCX is bound to current PDF/IR hashes."""
+    if job.source_type != "pdf":
+        raise FrameworkError("PDF ingest freshness is only valid for PDF jobs")
+    assert job.content_manifest is not None
+    assert job.normalized_source is not None
+    if not job.normalized_source.is_file():
+        raise IntegrityError("Normalized PDF source is missing; run ingest")
+    if not job.content_manifest.is_file():
+        raise IntegrityError("Reviewed PDF content manifest is missing")
+    report_path = job.qa_dir / "ingest.json"
+    if not report_path.is_file():
+        raise IntegrityError(
+            "PDF ingest provenance is missing; preserve the existing normalized "
+            "DOCX and generate a new reviewed ingest"
+        )
+    try:
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise IntegrityError(f"PDF ingest provenance is invalid: {exc}") from exc
+    effective_path = effective_manifest_path(job)
+    effective_binding = report.get("effective_manifest", {})
+    reported_effective_path = effective_binding.get("path")
+    if not isinstance(reported_effective_path, str) or not reported_effective_path:
+        raise IntegrityError("PDF ingest provenance has no effective manifest path")
+    if Path(reported_effective_path).resolve() != effective_path.resolve():
+        raise IntegrityError("PDF ingest provenance names an unexpected effective manifest")
+    bindings = (
+        ("source PDF", job.source, report.get("source", {}).get("sha256")),
+        (
+            "content manifest",
+            job.content_manifest,
+            report.get("manifest", {}).get("sha256"),
+        ),
+        (
+            "normalized source",
+            job.normalized_source,
+            report.get("normalized_source", {}).get("sha256"),
+        ),
+        (
+            "effective manifest",
+            effective_path,
+            effective_binding.get("sha256"),
+        ),
+    )
+    for label, path, expected in bindings:
+        if not isinstance(expected, str) or not expected:
+            raise IntegrityError(f"PDF ingest provenance has no {label} hash")
+        if not path.is_file() or sha256_file(path) != expected:
+            raise IntegrityError(f"{label.title()} changed after PDF ingest")
+    return report
+
+
 def ingest_pdf_job(job: JobConfig) -> dict[str, Any]:
     if job.source_type != "pdf":
         raise FrameworkError("The ingest command is only valid for PDF jobs")
     assert job.content_manifest is not None
     assert job.normalized_source is not None
+    required = sorted(
+        set(dict(job.pdf_font_map).values()) | set(job.required_fonts),
+        key=str.casefold,
+    )
+    absent = missing_fonts(required, job.required_fonts)
+    if absent:
+        raise UnsupportedFeatureError(
+            "Required fonts are not installed: " + ", ".join(absent)
+        )
     inventory = pdf_inventory(job.source)
-    manifest_scope = json.loads(job.content_manifest.read_text(encoding="utf-8")).get("scope")
+    manifest_scope = json.loads(
+        job.content_manifest.read_text(encoding="utf-8")
+    ).get("scope")
+    if manifest_scope == "preview":
+        expected_pages = job.preview_source_page_numbers
+    elif manifest_scope == "full":
+        expected_pages = job.content_page_numbers
+    else:
+        expected_pages = ()
     manifest = load_book_ir(
         job.content_manifest,
         source_pdf=job.source,
-        expected_pages=job.preview_source_page_numbers if manifest_scope == "preview" else (),
+        expected_pages=expected_pages,
     )
     if int(manifest["source"]["page_count"]) != int(inventory["page_count"]):
         raise FrameworkError("Book IR page count does not match the source PDF")
@@ -162,11 +241,14 @@ def ingest_pdf_job(job: JobConfig) -> dict[str, Any]:
         raise FrameworkError("Numbering review failed: " + "; ".join(numbering["errors"]))
     composition = build_normalized_docx(job, manifest, job.normalized_source)
     source_manifest_path = job.content_manifest.parent / "source_manifest.json"
+    effective_path = effective_manifest_path(job)
+    atomic_json_write(effective_path, manifest)
+    effective_hash = sha256_file(effective_path)
     source_manifest = {
         "schema_version": 1,
         "generated_at": utc_now(),
         "source": inventory,
-        "selected_pages": list(job.preview_source_page_numbers),
+        "selected_pages": [page["source_page"] for page in manifest["pages"]],
         "content_manifest": str(job.content_manifest),
         "content_manifest_sha256": sha256_file(job.content_manifest),
     }
@@ -182,6 +264,10 @@ def ingest_pdf_job(job: JobConfig) -> dict[str, Any]:
             "selected_pages": [page["source_page"] for page in manifest["pages"]],
         },
         "numbering_review": numbering,
+        "effective_manifest": {
+            "path": str(effective_path),
+            "sha256": effective_hash,
+        },
         "normalized_source": {
             **composition,
             "sha256": sha256_file(job.normalized_source),
@@ -193,6 +279,7 @@ def ingest_pdf_job(job: JobConfig) -> dict[str, Any]:
         source_sha256=sha256_file(job.source),
         template_sha256=sha256_file(job.template),
         content_manifest_sha256=sha256_file(job.content_manifest),
+        effective_manifest_sha256=effective_hash,
         normalized_source_sha256=sha256_file(job.normalized_source),
     )
     return result

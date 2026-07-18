@@ -8,8 +8,12 @@ from pathlib import Path
 from lxml import etree
 from pypdf import PdfWriter
 
-from framework.core.boundary import BoundaryError, selected_body
-from framework.core.models import FrameworkError, JobConfig, sha256_file
+from framework.core.boundary import (
+    BoundaryError,
+    selected_body,
+    selected_explicit_page_numbers,
+)
+from framework.core.models import FrameworkError, IntegrityError, JobConfig, sha256_file
 from framework.core.package import NS, W
 from framework.ingest.builder import build_normalized_docx
 from framework.ingest.ir import load_book_ir
@@ -59,6 +63,33 @@ class BoundaryTests(unittest.TestCase):
             "onetwothree",
         )
 
+    def test_selects_non_contiguous_pdf_pages_by_bookmark(self) -> None:
+        body = etree.fromstring(
+            f"""<w:body xmlns:w="{NS['w']}">
+            <w:p><w:bookmarkStart w:id="1" w:name="SourcePdfPage003"/>
+              <w:r><w:t>third</w:t></w:r><w:bookmarkEnd w:id="1"/></w:p>
+            <w:p><w:r><w:br w:type="page"/></w:r></w:p>
+            <w:p><w:bookmarkStart w:id="2" w:name="SourcePdfPage014"/>
+              <w:r><w:t>fourteenth</w:t></w:r><w:bookmarkEnd w:id="2"/></w:p>
+            <w:p><w:r><w:br w:type="page"/></w:r></w:p>
+            <w:p><w:bookmarkStart w:id="3" w:name="SourcePdfPage019"/>
+              <w:r><w:t>nineteenth</w:t></w:r><w:bookmarkEnd w:id="3"/></w:p>
+            <w:sectPr/>
+            </w:body>""".encode()
+        )
+        selected = selected_explicit_page_numbers(body, (14, 3))
+        self.assertEqual(
+            "".join(selected.xpath(".//w:t/text()", namespaces=NS)),
+            "fourteenththird",
+        )
+        self.assertEqual(
+            len(selected.findall(".//w:br[@w:type='page']", NS)),
+            1,
+        )
+        with self.assertRaises(BoundaryError):
+            selected_explicit_page_numbers(body, (98,))
+
+
 
 class JobTests(unittest.TestCase):
     def test_registered_job_resolves_paths(self) -> None:
@@ -68,8 +99,31 @@ class JobTests(unittest.TestCase):
         self.assertTrue(job.source.is_file())
         self.assertTrue(job.template.is_file())
 
+        self.assertEqual(job.source_type, "docx")
+        self.assertEqual(job.render_authority, "libreoffice")
+        self.assertEqual(job.composition_source, job.source)
+
+    def test_output_cannot_overwrite_an_approved_reference(self) -> None:
+        root = Path(__file__).resolve().parents[3]
+        approved = root / "12 CLASS MATHS - Book Template.docx"
+        job = JobConfig(
+            manifest_path=root / "unused-job.json",
+            job_id="collision-test",
+            school_class="12",
+            subject="Maths",
+            source=root / "12 CLASS MATHS.docx",
+            template=root / "Book_Template.docx",
+            preview_output=approved,
+            final_output=root / "unused-final.docx",
+            approved_reference=approved,
+            qa_dir=root / "unused-qa",
+        )
+        with self.assertRaisesRegex(IntegrityError, "protected input"):
+            job.validate()
+
     def test_pdf_job_loads_explicit_ingestion_contract(self) -> None:
         root = Path(__file__).resolve().parents[3]
+
         with tempfile.TemporaryDirectory() as temporary_name:
             temporary = Path(temporary_name)
             source = temporary / "source.pdf"
@@ -112,6 +166,19 @@ class JobTests(unittest.TestCase):
             self.assertEqual(job.source_type, "pdf")
             self.assertEqual(job.preview_page_count, 1)
             self.assertEqual(job.font_for("hindi"), "Nirmala UI")
+    def test_print_job_loads_source_locked_contract(self) -> None:
+        root = Path(__file__).resolve().parents[3]
+        job = JobConfig.load(root / "Books" / "Class 11" / "Maths" / "job.json")
+        self.assertEqual(job.content_page_numbers[0], 3)
+        self.assertEqual(job.content_page_numbers[-1], 104)
+        self.assertEqual(len(job.content_page_numbers), 102)
+        self.assertEqual(job.expected_pages_for_stage("final"), 102)
+        self.assertEqual(job.render_authority, "word")
+        self.assertIsNotNone(job.layout_reference)
+        assert job.layout_reference is not None
+        self.assertTrue(job.layout_reference.is_file())
+
+
 
 
 class PdfIngestionTests(unittest.TestCase):

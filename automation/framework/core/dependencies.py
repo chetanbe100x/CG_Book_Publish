@@ -394,3 +394,27 @@ def disable_automatic_field_updates(destination_parts: dict[str, bytes]) -> None
         if parent is not None:
             parent.remove(element)
     destination_parts["word/settings.xml"] = xml_bytes(root)
+
+
+def disable_automatic_image_compression(
+    destination_parts: dict[str, bytes],
+) -> None:
+    data = destination_parts.get("word/settings.xml")
+    if data is None:
+        return
+    root = parse_xml(data, "word/settings.xml")
+    element = root.find(".//w:doNotAutoCompressPictures", NS)
+    if element is None:
+        element = etree.SubElement(root, W + "doNotAutoCompressPictures")
+        successor = next(
+            (
+                root.find(f"w:{name}", NS)
+                for name in ("shapeDefaults", "decimalSymbol", "listSeparator")
+                if root.find(f"w:{name}", NS) is not None
+            ),
+            None,
+        )
+        if successor is not None:
+            successor.addprevious(element)
+    element.set(W + "val", "true")
+    destination_parts["word/settings.xml"] = xml_bytes(root)

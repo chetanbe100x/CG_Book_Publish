@@ -67,6 +67,11 @@ class JobConfig:
     subject_profile: str = "science"
     adapter: str | None = None
     required_fonts: tuple[str, ...] = field(default_factory=tuple)
+    layout_reference: Path | None = None
+    content_page_ranges: tuple[tuple[int, int], ...] = field(default_factory=tuple)
+    first_content_side: str = "recto"
+    expected_page_count: int | None = None
+    render_authority: str = "libreoffice"
 
     @staticmethod
     def load(manifest_path: str | Path) -> "JobConfig":
@@ -88,7 +93,18 @@ class JobConfig:
         source_type = str(data.get("source_type", source.suffix.lstrip("."))).casefold()
         normalized_source = resolve("normalized_source", optional=True)
         content_manifest = resolve("content_manifest", optional=True)
+        layout_reference = resolve("layout_reference", optional=True)
         page_numbers = tuple(int(v) for v in data.get("preview_source_page_numbers", []))
+        page_ranges_value = data.get("content_page_ranges", [])
+        if not isinstance(page_ranges_value, list):
+            raise FrameworkError("content_page_ranges must be an array")
+        page_ranges: list[tuple[int, int]] = []
+        for index, value in enumerate(page_ranges_value, start=1):
+            if not isinstance(value, list) or len(value) != 2:
+                raise FrameworkError(
+                    f"content_page_ranges item {index} must contain [start, end]"
+                )
+            page_ranges.append((int(value[0]), int(value[1])))
         font_map_value = data.get("pdf_font_map", {})
         if not isinstance(font_map_value, dict):
             raise FrameworkError("pdf_font_map must be an object")
@@ -123,6 +139,15 @@ class JobConfig:
             subject_profile=str(data.get("subject_profile", "science")),
             adapter=data.get("adapter"),
             required_fonts=tuple(str(v) for v in data.get("required_fonts", [])),
+            layout_reference=layout_reference,
+            content_page_ranges=tuple(page_ranges),
+            first_content_side=str(data.get("first_content_side", "recto")),
+            expected_page_count=(
+                int(data["expected_page_count"])
+                if data.get("expected_page_count") is not None
+                else None
+            ),
+            render_authority=str(data.get("render_authority", "libreoffice")),
         )
         job.validate()
         return job
@@ -134,6 +159,8 @@ class JobConfig:
             raise FrameworkError(f"Template DOCX not found: {self.template}")
         if self.approved_reference is not None and not self.approved_reference.is_file():
             raise FrameworkError(f"Approved reference not found: {self.approved_reference}")
+        if self.layout_reference is not None and not self.layout_reference.is_file():
+            raise FrameworkError(f"Layout reference not found: {self.layout_reference}")
         if self.preview_source_pages < 1:
             raise FrameworkError("preview_source_pages must be positive")
         if self.source_type not in {"docx", "pdf"}:
@@ -148,6 +175,44 @@ class JobConfig:
             raise FrameworkError(f"Unsupported typography_policy: {self.typography_policy}")
         if self.boundary_strategy not in {"saved_rendered", "explicit"}:
             raise FrameworkError(f"Unsupported boundary_strategy: {self.boundary_strategy}")
+        if self.first_content_side not in {"recto", "verso"}:
+            raise FrameworkError("first_content_side must be recto or verso")
+        if self.render_authority not in {"word", "libreoffice"}:
+            raise FrameworkError("render_authority must be word or libreoffice")
+        if self.expected_page_count is not None and self.expected_page_count < 1:
+            raise FrameworkError("expected_page_count must be positive")
+        expanded_pages: list[int] = []
+        for index, (start, end) in enumerate(self.content_page_ranges, start=1):
+            if start < 1 or end < start:
+                raise FrameworkError(
+                    f"Invalid content_page_ranges item {index}: [{start}, {end}]"
+                )
+            expanded_pages.extend(range(start, end + 1))
+        if len(set(expanded_pages)) != len(expanded_pages):
+            raise FrameworkError("content_page_ranges must not overlap")
+        if self.expected_page_count is not None and expanded_pages:
+            if len(expanded_pages) != self.expected_page_count:
+                raise FrameworkError(
+                    "expected_page_count does not match content_page_ranges"
+                )
+        if self.render_authority == "word" and self.source_type == "pdf":
+            if not expanded_pages or self.expected_page_count is None:
+                raise FrameworkError(
+                    "Word-authoritative PDF jobs require content_page_ranges "
+                    "and expected_page_count"
+                )
+        previous_end = 0
+        for index, (start, end) in enumerate(self.content_page_ranges, start=1):
+            if start <= previous_end:
+                raise FrameworkError(
+                    "content_page_ranges must be strictly increasing; "
+                    f"item {index} starts at {start} after {previous_end}"
+                )
+            previous_end = end
+        if expanded_pages and any(
+            value not in set(expanded_pages) for value in self.preview_source_page_numbers
+        ):
+            raise FrameworkError("Preview pages must be inside content_page_ranges")
         if len(set(self.preview_source_page_numbers)) != len(
             self.preview_source_page_numbers
         ):
@@ -186,10 +251,23 @@ class JobConfig:
                     + ", ".join(sorted(missing_roles))
                 )
         protected = {self.source, self.template}
+        if self.approved_reference is not None:
+            protected.add(self.approved_reference)
+        if self.layout_reference is not None:
+            protected.add(self.layout_reference)
         if self.preview_output in protected or self.final_output in protected:
             raise IntegrityError("Output path collides with a protected input")
         if self.normalized_source is not None and self.normalized_source in protected:
             raise IntegrityError("Normalized source path collides with a protected input")
+        if self.content_manifest is not None and self.content_manifest in protected:
+            raise IntegrityError("Content manifest path collides with a protected input")
+        generated = [self.preview_output, self.final_output]
+        if self.normalized_source is not None:
+            generated.append(self.normalized_source)
+        if self.content_manifest is not None:
+            generated.append(self.content_manifest)
+        if len(set(generated)) != len(generated):
+            raise IntegrityError("Generated artifact paths must be distinct")
 
     @property
     def composition_source(self) -> Path:
@@ -207,6 +285,23 @@ class JobConfig:
         if self.preview_source_page_numbers:
             return len(self.preview_source_page_numbers)
         return self.preview_source_pages
+
+    @property
+    def content_page_numbers(self) -> tuple[int, ...]:
+        return tuple(
+            page
+            for start, end in self.content_page_ranges
+            for page in range(start, end + 1)
+        )
+
+    def expected_pages_for_stage(self, stage: str) -> int | None:
+        if stage == "preview":
+            return self.preview_page_count
+        if stage == "final":
+            return self.expected_page_count
+        if stage == "source":
+            return None
+        raise FrameworkError(f"Unknown stage: {stage}")
 
     def font_for(self, role: str) -> str:
         mapping = dict(self.pdf_font_map)
@@ -275,6 +370,44 @@ class StatusStore:
         atomic_json_write(self.job.status_path, status)
         return status
 
+    def require_current_preview_provenance(self) -> dict[str, Any]:
+        """Verify that preview QA/approval still refers to current inputs."""
+        status = self.load()
+        if not self.job.preview_output.is_file():
+            raise IntegrityError("Preview file is missing")
+        expected_preview = status.get("preview_sha256")
+        if not expected_preview:
+            raise IntegrityError("Preview provenance is missing; regenerate the preview")
+        if sha256_file(self.job.preview_output) != expected_preview:
+            raise IntegrityError("Preview changed after generation; rerun preview and QA")
+
+        bindings: list[tuple[str, Path | None]] = [
+            ("source", self.job.source),
+            ("template", self.job.template),
+        ]
+        if self.job.layout_reference is not None:
+            bindings.append(("layout_reference", self.job.layout_reference))
+        if self.job.approved_reference is not None:
+            bindings.append(("approved_reference", self.job.approved_reference))
+        if self.job.source_type == "pdf":
+            bindings.extend(
+                [
+                    ("normalized_source", self.job.normalized_source),
+                    ("content_manifest", self.job.content_manifest),
+                ]
+            )
+        for label, path in bindings:
+            expected = status.get(f"{label}_sha256")
+            if not expected:
+                raise IntegrityError(
+                    f"Preview provenance is missing the {label.replace('_', ' ')} hash"
+                )
+            if path is None or not path.is_file() or sha256_file(path) != expected:
+                raise IntegrityError(
+                    f"{label.replace('_', ' ').title()} changed after preview generation"
+                )
+        return status
+
     def require_approved_preview(self) -> dict[str, Any]:
         status = self.load()
         approved_hash = status.get("approved_preview_sha256")
@@ -285,15 +418,40 @@ class StatusStore:
         current_hash = sha256_file(self.job.preview_output)
         if current_hash != approved_hash:
             raise IntegrityError("Preview changed after approval")
-        for label, path in (("source", self.job.source), ("template", self.job.template)):
+        protected_inputs = [("source", self.job.source), ("template", self.job.template)]
+        if self.job.layout_reference is not None:
+            protected_inputs.append(("layout_reference", self.job.layout_reference))
+        for label, path in protected_inputs:
             expected = status.get(f"approved_{label}_sha256")
-            if expected and sha256_file(path) != expected:
+            if not expected:
+                raise IntegrityError(
+                    f"Approved preview is missing the {label.replace('_', ' ')} hash"
+                )
+            if sha256_file(path) != expected:
                 raise IntegrityError(f"{label.title()} changed after preview approval")
-        for label, path in (
-            ("normalized_source", self.job.normalized_source),
-            ("content_manifest", self.job.content_manifest),
-        ):
-            expected = status.get(f"approved_{label}_sha256")
-            if expected and (path is None or not path.is_file() or sha256_file(path) != expected):
-                raise IntegrityError(f"{label.replace('_', ' ').title()} changed after approval")
+        if self.job.approved_reference is not None:
+            expected_reference = status.get("approved_reference_sha256")
+            if not expected_reference:
+                raise IntegrityError(
+                    "Approved preview is missing the approved reference hash"
+                )
+            if sha256_file(self.job.approved_reference) != expected_reference:
+                raise IntegrityError(
+                    "Approved reference changed after preview approval"
+                )
+        if self.job.source_type == "pdf":
+            for label, path in (
+                ("normalized_source", self.job.normalized_source),
+                ("content_manifest", self.job.content_manifest),
+            ):
+                expected = status.get(f"approved_{label}_sha256")
+                if not expected:
+                    raise IntegrityError(
+                        "Approved preview is missing the "
+                        f"{label.replace('_', ' ')} hash"
+                    )
+                if path is None or not path.is_file() or sha256_file(path) != expected:
+                    raise IntegrityError(
+                        f"{label.replace('_', ' ').title()} changed after approval"
+                    )
         return status

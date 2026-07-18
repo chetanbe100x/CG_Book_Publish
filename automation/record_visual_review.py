@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from pathlib import Path
 
 from framework.core.models import JobConfig
 from framework.qa.visual import record_visual_review
@@ -14,6 +15,7 @@ def main() -> int:
     parser.add_argument("--pages", type=int, required=True)
     parser.add_argument("--result", choices=("pass", "fail"), required=True)
     parser.add_argument("--notes", required=True)
+    parser.add_argument("--render-manifest")
     args = parser.parse_args()
     result = record_visual_review(
         JobConfig.load(args.job),
@@ -21,6 +23,9 @@ def main() -> int:
         passed=args.result == "pass",
         page_count=args.pages,
         notes=args.notes,
+        render_manifest=(
+            Path(args.render_manifest) if args.render_manifest else None
+        ),
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
     return 0

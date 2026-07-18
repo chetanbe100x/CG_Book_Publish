@@ -156,6 +156,11 @@ def audit_job(job: JobConfig) -> dict[str, Any]:
             "subject_profile": job.subject_profile,
             "preview_source_pages": job.preview_source_pages,
             "preview_source_page_numbers": list(job.preview_source_page_numbers),
+            "content_page_ranges": [list(value) for value in job.content_page_ranges],
+            "first_content_side": job.first_content_side,
+            "expected_page_count": job.expected_page_count,
+            "render_authority": job.render_authority,
+            "layout_reference": str(job.layout_reference) if job.layout_reference else None,
             "content_policy": job.content_policy,
             "typography_policy": job.typography_policy,
             "boundary_strategy": job.boundary_strategy,
@@ -167,6 +172,8 @@ def audit_job(job: JobConfig) -> dict[str, Any]:
         result["normalized_source"] = document_inventory(job.normalized_source)
     if job.approved_reference is not None:
         result["approved_reference"] = document_inventory(job.approved_reference)
+    if job.layout_reference is not None:
+        result["layout_reference"] = document_inventory(job.layout_reference)
     atomic_json_write(job.audit_path, result)
     StatusStore(job).transition(
         "audited",
@@ -175,6 +182,11 @@ def audit_job(job: JobConfig) -> dict[str, Any]:
         approved_reference_sha256=(
             result.get("approved_reference", {}).get("sha256")
             if isinstance(result.get("approved_reference"), dict)
+            else None
+        ),
+        layout_reference_sha256=(
+            result.get("layout_reference", {}).get("sha256")
+            if isinstance(result.get("layout_reference"), dict)
             else None
         ),
         normalized_source_sha256=(
