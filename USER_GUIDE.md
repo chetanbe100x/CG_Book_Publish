@@ -2,7 +2,7 @@
 
 ## 1. What This Framework Does
 
-The framework places the contents of an input Word or PDF book into the approved page template while preserving text, fonts, equations, numbering, tables, images, and page-level content relationships.
+The framework places the contents of an input Word or PDF book into the approved page template (defining the A4 borders, graphics, and safe area boundaries) while dynamically matching all fonts, colors, spacing, answer lines, and page density guidelines of a provided **Sample Book** (configured as layout reference). All text, equations, numbering, tables, images, and page-level content relationships are strictly preserved.
 
 Every new book follows the same controlled process:
 
@@ -19,6 +19,7 @@ The original input, template, approved preview, and final output are never overw
 Confirm that:
 
 - The complete book is available as one `.docx` or readable, unencrypted `.pdf` file.
+- The Sample Book (the visual layout reference `.docx` file) is available for layout styles.
 - `D:\Experiments_Projects\CG_Book_Publish\Book_Template.docx` exists.
 - Microsoft Word and LibreOffice are installed.
 - Fonts used by a DOCX input are installed on the computer. PDF jobs must define an installed Hindi/Latin/math font map.
@@ -37,11 +38,11 @@ D:\Experiments_Projects\CG_Book_Publish\
     \-- Class 11\
         \-- Maths\
             \-- Input\
-                +-- 11 CLASS MATHS.docx
-                \-- Maths_11th.pdf
+                +-- Maths_11th.pdf                              (Input source document)
+                \-- Class 11 Maths - Printable Reference.docx   (Sample Book/Layout Reference)
 ```
 
-Only place the source document in `Input`. The process creates these automatically:
+Place both the source input document and the Sample Book in the `Input` directory. The pipeline process will create the other directories automatically:
 
 ```text
 Books\Class 11\Maths\
@@ -58,6 +59,8 @@ Do not place or edit files manually in `Preview`, `Final`, or `QA`.
 
 ## 4. Start a New Book
 
+Before running the prompt, ensure you have placed both the input file and the Sample Book (layout reference) inside the `Input` directory for the book (e.g., `Books\Class 11\Maths\Input\`).
+
 Open Codex in the project folder and use this prompt, replacing the example values:
 
 ```text
@@ -66,18 +69,15 @@ Register and process a new book using the Accuracy-First Book Conversion Framewo
 Class: 11
 Subject: Maths
 Input:
-D:\Experiments_Projects\CG_Book_Publish\Books\Class 11\Maths\Input\11 CLASS MATHS.docx
+D:\Experiments_Projects\CG_Book_Publish\Books\Class 11\Maths\Input\Maths_11th.pdf
 
 Template:
 D:\Experiments_Projects\CG_Book_Publish\Book_Template.docx
 
-Create the required folders and job.json. Audit the actual input and select
-capabilities from its detected content. Check required fonts and stop if any
-are missing. Generate only the first seven source-page preview. Preserve all
-educational content and formatting objects. Run structural validation, render
-and visually inspect every preview page, and produce the QA report. Do not run
-the complete conversion. Do not modify or overwrite the input or template.
-Stop and wait for my explicit approval.
+Sample Book:
+D:\Experiments_Projects\CG_Book_Publish\Books\Class 11\Maths\Input\Class 11 Maths - Printable Reference.docx
+
+Create the required folders and job.json. Set the Sample Book as layout_reference in the job config. Audit the actual input and select capabilities from its detected content. Check required fonts and stop if any are missing. Generate only the first seven source-page preview. Preserve all educational content and formatting objects. Run structural validation, render and visually inspect every preview page, and produce the QA report. Do not run the complete conversion. Do not modify or overwrite the input, template, or sample book. Stop and wait for my explicit approval.
 ```
 
 For DOCX input, the preview may contain more than seven output pages because the template has different margins and usable page space. "Seven pages" means seven saved source pages.
@@ -85,11 +85,7 @@ For DOCX input, the preview may contain more than seven output pages because the
 For PDF input, add these instructions to the prompt:
 
 ```text
-Treat the PDF as immutable. Audit it, then create a reviewed Book IR manifest
-for seven representative source pages. Type the content into an editable
-normalized DOCX, map Hindi/Latin/math fonts explicitly, and use a book-specific
-adapter only for source-specific figure extraction. Run ingest, audit, preview,
-structural QA, and page-by-page visual QA. Do not run the full conversion.
+Treat the PDF as immutable. Audit it, then create a reviewed Book IR manifest for seven representative source pages. Type the content into an editable normalized DOCX, set the Sample Book as layout_reference, map Hindi/Latin/math fonts explicitly, and use a book-specific adapter only for source-specific figure extraction. Run ingest, audit, preview, structural QA, and page-by-page visual QA. Do not run the full conversion.
 ```
 
 The PDF path is `PDF -> reviewed Book IR -> editable normalized DOCX -> existing composer`. The full conversion remains blocked until the Book IR scope is `full` and the preview hash is explicitly approved.
@@ -137,10 +133,10 @@ I approve this preview:
 Record its approval hash and perform the complete conversion. Run structural
 validation and all registered regression cases. Render and inspect every final
 page. Place the completed DOCX in the Final folder. Do not overwrite the input,
-template, or approved preview.
+template, sample book, or approved preview.
 ```
 
-Complete conversion is blocked if the preview was not approved or if the input, template, or preview changed after approval.
+Complete conversion is blocked if the preview was not approved or if the input, template, sample book, or preview changed after approval.
 
 ## 7. Find the Results
 
@@ -191,7 +187,37 @@ Run preview QA again and approve the new hash. Never bypass the approval check.
 ## 10. Important Rules
 
 - Never replace `Book_Template.docx` without creating and approving a new template baseline.
-- Never rename, edit, or delete input files during an active job.
+- Never rename, edit, or delete input files or Sample Books during an active job.
 - Never approve a preview without opening and reviewing it.
 - Never deliver a final DOCX without a passing QA report.
 - Keep each class and subject in its own folder.
+
+## 11. Sample Book Case Study: Class 11 Maths
+
+The Class 11 Maths book serves as the canonical sample for dynamic reflowing layouts using mirrored margins.
+
+### Hierarchy of Authority
+- **Input PDF (`Input/Maths_11th.pdf`)** — *Content Authority Only*:
+  Authoritative only for the bilingual question texts, options text, formula structures, figures, marks, and logical sequence. Fonts, margins, page breaks, and physical spacing are ignored.
+- **Sample Book / Layout Reference (`Input/Class 11 Maths - Printable Reference.docx`)** — *Visual & Layout Authority*:
+  Often referred to simply as the **Sample Book** (configured as `"layout_reference"` in the `job.json`). This determines all visual style rules such as font types/sizes, colors, paragraph spacing, answer lines layout, page density, and overall presentation.
+- **Document Template (`Book_Template.docx`)** — *Safe Printable Area & Page Geometry*:
+  Provides the global page boundary, borders, decorative graphics, headers/footers, and the safe printable content grid (A4 dimensions).
+
+### Sample job.json Configuration
+```json
+{
+  "class": "11",
+  "subject": "Maths",
+  "source_type": "pdf",
+  "source": "Input/Maths_11th.pdf",
+  "normalized_source": "Work/Normalized Print Source v7.docx",
+  "content_manifest": "Work/book_ir.full.json",
+  "template": "../../../Book_Template.docx",
+  "layout_reference": "Input/Class 11 Maths - Printable Reference.docx",
+  "preview_output": "Preview/Class 11 Maths - Print Ready Golden v7.docx",
+  "final_output": "Final/Class 11 Maths - Print Ready v7.docx",
+  "source_style_policy": "content_only",
+  "pagination_policy": "sample_flow"
+}
+```
