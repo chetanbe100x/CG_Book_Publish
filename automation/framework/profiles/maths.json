@@ -26,20 +26,20 @@
       "first_content_side": "recto"
     },
     "styles": {
-      "body": {"font_role": "latin", "size_points": 14.0, "color": "181818", "space_after_points": 4.0, "line_spacing": 1.15},
-      "hindi": {"font_role": "hindi", "size_points": 14.0, "color": "181818", "space_after_points": 4.0, "line_spacing": 1.15},
-      "english": {"font_role": "latin", "size_points": 12.0, "color": "64748B", "space_after_points": 6.0, "line_spacing": 1.15, "left_indent_mm": 4.5},
-      "question": {"font_role": "hindi", "size_points": 14.0, "color": "181818", "space_after_points": 4.0, "line_spacing": 1.15},
-      "question_label": {"font_role": "latin", "size_points": 11.0, "bold": true, "color": "0D9488"},
-      "unit": {"font_role": "hindi", "size_points": 17.0, "bold": true, "color": "181818", "alignment": "center", "space_before_points": 2.0, "space_after_points": 6.0, "line_spacing": 1.1},
-      "chapter": {"font_role": "hindi", "size_points": 15.0, "bold": true, "color": "181818", "alignment": "center", "space_before_points": 2.0, "space_after_points": 8.0, "line_spacing": 1.1},
-      "question_type": {"font_role": "hindi", "size_points": 14.0, "bold": true, "color": "0D9488", "alignment": "center", "space_before_points": 8.0, "space_after_points": 10.0, "line_spacing": 1.1},
-      "equation": {"font_role": "math", "size_points": 14.5, "color": "181818", "alignment": "center", "space_before_points": 3.0, "space_after_points": 6.0, "line_spacing": 1.05},
-      "option": {"font_role": "math", "size_points": 14.0, "color": "181818", "space_after_points": 8.0, "line_spacing": 1.1},
-      "option_label": {"font_role": "latin", "size_points": 11.0, "bold": true, "color": "0D9488"},
-      "answer_line": {"font_role": "latin", "size_points": 10.0, "color": "181818", "space_after_points": 0.0, "line_spacing": 1.0}
+      "body": {"font_role": "latin", "size_points": 16.0, "color": "000000", "space_after_points": 4.0, "line_spacing": 1.15},
+      "hindi": {"font_role": "hindi", "size_points": 16.0, "color": "000000", "space_after_points": 4.0, "line_spacing": 1.15},
+      "english": {"font_role": "latin", "size_points": 16.0, "color": "000000", "space_after_points": 6.0, "line_spacing": 1.15, "left_indent_mm": 0.0},
+      "question": {"font_role": "hindi", "size_points": 16.0, "color": "000000", "space_after_points": 4.0, "line_spacing": 1.15},
+      "question_label": {"font_role": "latin", "size_points": 14.0, "bold": true, "color": "764673"},
+      "unit": {"font_role": "hindi", "size_points": 24.0, "bold": true, "color": "764673", "alignment": "center", "space_before_points": 2.0, "space_after_points": 6.0, "line_spacing": 1.1},
+      "chapter": {"font_role": "hindi", "size_points": 24.0, "bold": true, "color": "764673", "alignment": "center", "space_before_points": 2.0, "space_after_points": 8.0, "line_spacing": 1.1},
+      "question_type": {"font_role": "hindi", "size_points": 16.0, "bold": true, "color": "000000", "alignment": "left", "space_before_points": 8.0, "space_after_points": 10.0, "line_spacing": 1.1},
+      "equation": {"font_role": "math", "size_points": 16.0, "color": "000000", "alignment": "center", "space_before_points": 3.0, "space_after_points": 6.0, "line_spacing": 1.05},
+      "option": {"font_role": "math", "size_points": 16.0, "color": "000000", "space_after_points": 8.0, "line_spacing": 1.1},
+      "option_label": {"font_role": "latin", "size_points": 14.0, "bold": true, "color": "764673"},
+      "answer_line": {"font_role": "latin", "size_points": 10.0, "color": "764673", "space_after_points": 0.0, "line_spacing": 1.0}
     },
-    "inline_math_points": 14.5,
+    "inline_math_points": 16.0,
     "options": {
       "table_indent_twips": 420,
       "table_width_twips": 9220,
@@ -51,10 +51,10 @@
       "max_four_inline_visual_units": 14.0
     },
     "answer_space": {
-      "default_pitch_points": 30.5,
-      "generous_pitch_points": 34.5,
-      "line_counts_by_marks": {"3": 7, "4": 9, "5": 11},
-      "border_color": "8A8A8A",
+      "default_pitch_points": 24.0,
+      "generous_pitch_points": 27.0,
+      "line_counts_by_marks": {"1": 2, "2": 4, "3": 7, "4": 9, "5": 11, "6": 14},
+      "border_color": "764673",
       "border_size_eighth_points": 4,
       "border_space_points": 1
     },

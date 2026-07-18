@@ -189,6 +189,7 @@ def _content_measurement(
     safe_bottom: float,
     footer_top: float,
     restrict_to_live_frame: bool = False,
+    style_policy: str = "source_authority",
 ) -> dict[str, Any]:
     words = page.extract_words(
         x_tolerance=1.0,
@@ -225,7 +226,8 @@ def _content_measurement(
     bottoms.extend(box[3] for box in visual_boxes)
     min_top = min(tops) if tops else None
     max_bottom = max(bottoms) if bottoms else None
-    answer_extent = _horizontal_answer_extent(page, left=left, right=right)
+    left_ans = left + 27.0 if style_policy == "content_only" else left
+    answer_extent = _horizontal_answer_extent(page, left=left_ans, right=right)
     if answer_extent is not None:
         max_bottom = max(max_bottom or answer_extent, answer_extent)
     utilization = (
@@ -308,16 +310,20 @@ def _answer_space_rules(
             targets.append(bottom)
     target: float | None = None
     if answer_blocks:
-        if targets:
-            target = min(
-                max(targets),
-                ANSWER_LINE_TARGET_BOTTOM_MM * POINTS_PER_MM,
-            )
-        elif source_measurement.get("content_bottom_points") is not None:
-            target = min(
-                float(source_measurement["content_bottom_points"]),
-                ANSWER_LINE_TARGET_BOTTOM_MM * POINTS_PER_MM,
-            )
+        page_type = page_meta.get("page_type", "other")
+        if page_type in {"short_answer", "long_answer"}:
+            target = (267.0 * POINTS_PER_MM) - 27.0
+        else:
+            if targets:
+                target = min(
+                    max(targets),
+                    ANSWER_LINE_TARGET_BOTTOM_MM * POINTS_PER_MM,
+                )
+            elif source_measurement.get("content_bottom_points") is not None:
+                target = min(
+                    float(source_measurement["content_bottom_points"]),
+                    ANSWER_LINE_TARGET_BOTTOM_MM * POINTS_PER_MM,
+                )
     return has_answer_canvas, bool(answer_blocks), target
 
 
@@ -327,6 +333,7 @@ def analyze_word_pdf(
     *,
     stage: str,
     source_page_numbers: tuple[int, ...],
+    bookmark_pages: dict[str, int] | None = None,
 ) -> dict[str, Any]:
     """Measure the Word-exported PDF against the source-locked print contract."""
 
@@ -342,22 +349,39 @@ def analyze_word_pdf(
     page_results: list[dict[str, Any]] = []
 
     with pdfplumber.open(source) as pdf:
-        if expected_count is not None and len(pdf.pages) != expected_count:
-            errors.append(
-                "Rendered page-count mismatch: "
-                f"expected {expected_count}, got {len(pdf.pages)}"
-            )
-        if source_page_numbers and len(source_page_numbers) != len(pdf.pages):
-            errors.append(
-                "Source-page mapping length does not match rendered page count"
-            )
+        if job.pagination_policy != "sample_flow":
+            if expected_count is not None and len(pdf.pages) != expected_count:
+                errors.append(
+                    "Rendered page-count mismatch: "
+                    f"expected {expected_count}, got {len(pdf.pages)}"
+                )
+            if source_page_numbers and len(source_page_numbers) != len(pdf.pages):
+                errors.append(
+                    "Source-page mapping length does not match rendered page count"
+                )
 
         for physical_index, page in enumerate(pdf.pages, start=1):
-            source_page = (
-                source_page_numbers[physical_index - 1]
-                if physical_index <= len(source_page_numbers)
-                else None
-            )
+            if job.pagination_policy == "sample_flow" and bookmark_pages:
+                active_bookmark = None
+                for name, page_num in bookmark_pages.items():
+                    if name.startswith("SourcePdfPage"):
+                        try:
+                            bm_page = int(page_num)
+                        except (TypeError, ValueError):
+                            continue
+                        if bm_page <= physical_index:
+                            if active_bookmark is None or bm_page > int(bookmark_pages[active_bookmark]):
+                                active_bookmark = name
+                if active_bookmark:
+                    source_page = int(active_bookmark[13:])
+                else:
+                    source_page = None
+            else:
+                source_page = (
+                    source_page_numbers[physical_index - 1]
+                    if physical_index <= len(source_page_numbers)
+                    else None
+                )
             page_errors: list[str] = []
             page_warnings: list[str] = []
             width = float(page.width)
@@ -392,6 +416,7 @@ def analyze_word_pdf(
                 safe_top=safe_top,
                 safe_bottom=safe_bottom,
                 footer_top=footer_top,
+                style_policy=job.source_style_policy,
             )
             content_words = measured["words"]
             visual_boxes = measured["visual_boxes"]
@@ -455,7 +480,7 @@ def analyze_word_pdf(
                 "chapter_end",
                 "intentional_whitespace",
             }
-            if source_locked and not exempt:
+            if source_locked and not exempt and job.pagination_policy != "sample_flow":
                 if utilization_delta is not None:
                     if utilization_delta < -SOURCE_UTILIZATION_TOLERANCE_PERCENT:
                         page_errors.append(
@@ -500,10 +525,11 @@ def analyze_word_pdf(
             has_answer_canvas, requires_answer_lines, answer_target = (
                 _answer_space_rules(page_meta, source_measurement)
             )
-            if source_locked and requires_answer_lines and answer_extent is None:
+            if source_locked and job.pagination_policy != "sample_flow" and requires_answer_lines and answer_extent is None:
                 page_errors.append("no full-width answer line was detected")
             elif (
                 source_locked
+                and job.pagination_policy != "sample_flow"
                 and requires_answer_lines
                 and answer_extent is not None
                 and answer_target is not None

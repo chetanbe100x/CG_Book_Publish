@@ -14,9 +14,12 @@ from ..core.models import FrameworkError, JobConfig
 def _poppler_path() -> Path:
     dependencies = Path(sys.executable).resolve().parent.parent
     candidate = dependencies / "native" / "poppler" / "Library" / "bin"
-    if not (candidate / "pdftoppm.exe").is_file():
-        raise FrameworkError(f"Bundled Poppler was not found: {candidate}")
-    return candidate
+    if (candidate / "pdftoppm.exe").is_file():
+        return candidate
+    fallback = Path(r"C:\Users\chetan\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\poppler\Library\bin")
+    if (fallback / "pdftoppm.exe").is_file():
+        return fallback
+    raise FrameworkError(f"Bundled Poppler was not found at {candidate} or {fallback}")
 
 
 def _prepare_crop(

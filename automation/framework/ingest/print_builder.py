@@ -93,7 +93,7 @@ def _clear_template_body(document: Any) -> None:
             body.remove(child)
 
 
-def _configure_document_settings(document: Any) -> None:
+def _configure_document_settings(document: Any, job: JobConfig | None = None) -> None:
     settings = document.settings._element
     for element in list(settings.findall(qn("w:updateFields"))):
         settings.remove(element)
@@ -112,6 +112,12 @@ def _configure_document_settings(document: Any) -> None:
         if successor is not None:
             successor.addprevious(compression)
     compression.set(qn("w:val"), "true")
+
+    if job is not None and job.source_style_policy == "content_only":
+        mirror = settings.find(qn("w:mirrorMargins"))
+        if mirror is None:
+            mirror = OxmlElement("w:mirrorMargins")
+            settings.append(mirror)
 
 
 def _set_run_font(run: Any, name: str, size_points: float) -> None:
@@ -213,6 +219,7 @@ def _page_context(
     layout: PrintLayoutProfile,
     page_index: int,
     first_content_side: str | None = None,
+    job: JobConfig | None = None,
 ) -> PageContext:
     section = document.sections[-1]
     page_width = int(section.page_width.twips)
@@ -225,6 +232,11 @@ def _page_context(
             "Template page geometry does not match the print profile: "
             f"{page_width}x{page_height} twips"
         )
+    
+    if job is not None and job.source_style_policy == "content_only":
+        top = max(0, mm_to_twips(layout.page.top_content_mm) - int(section.top_margin.twips))
+        return PageContext(left_indent_twips=0, right_indent_twips=0, top_offset_twips=top)
+
     first_side = first_content_side or layout.page.first_content_side
     if first_side not in {"recto", "verso"}:
         raise FrameworkError("first_content_side must be recto or verso")
@@ -391,6 +403,7 @@ def _add_answer_lines(
             color=layout.answer_space.border_color,
             size=layout.answer_space.border_size_eighth_points,
             space=layout.answer_space.border_space_points,
+            edges=("bottom", "between"),
         )
         lines.append(paragraph)
     return lines
@@ -544,10 +557,22 @@ def _add_options(
         widths = layout.options.two_column_widths_twips
     else:
         widths = (layout.options.table_width_twips,)
+    
+    if job.source_style_policy == "content_only":
+        total_width = mm_to_twips(layout.page.live_body_width_mm)
+        col2_width = total_width - 540
+        sum_widths = sum(widths)
+        if sum_widths > col2_width:
+            scale = col2_width / sum_widths
+            widths = tuple(int(w * scale) for w in widths)
+        indent = 0
+    else:
+        indent = context.left_indent_twips + layout.options.table_indent_twips
+
     set_exact_geometry(
         table,
         widths,
-        indent_twips=context.left_indent_twips + layout.options.table_indent_twips,
+        indent_twips=indent,
         cell_margins_twips=(
             layout.options.cell_margin_top_twips,
             layout.options.cell_margin_right_twips,
@@ -562,7 +587,7 @@ def _add_options(
         cell = table.cell(row_index, column_index)
         cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
         paragraph = cell.paragraphs[0]
-        paragraph.style = document.styles["Book Option"]
+        paragraph.style = "Book Option"
         paragraph.paragraph_format.space_after = Pt(layout.options.row_space_after_points)
         label = paragraph.add_run(f"({item['label']}) ")
         _apply_run(label, {}, job, layout, label_spec)
@@ -627,7 +652,7 @@ def _add_table(
             cell = table.cell(row_index, column_index)
             cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
             paragraph = cell.paragraphs[0]
-            paragraph.style = document.styles["Book Body"]
+            paragraph.style = "Book Body"
             paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
             run = paragraph.add_run(str(value))
             _apply_run(
@@ -886,6 +911,40 @@ def _keep_transition(previous: dict[str, Any], current: dict[str, Any]) -> bool:
     return False
 
 
+def _delete_paragraph(paragraph: Any) -> None:
+    p = paragraph._element
+    p.getparent().remove(p)
+    paragraph._p = paragraph._element = None
+
+
+def _group_page_blocks(blocks: list[dict[str, Any]]) -> list[dict[str, Any] | list[dict[str, Any]]]:
+    groups: list[Any] = []
+    current_q_group: list[dict[str, Any]] | None = None
+    for block in blocks:
+        kind = block.get("kind")
+        if kind == "question":
+            current_q_group = [block]
+            groups.append(current_q_group)
+        elif current_q_group is not None and kind in {
+            "options",
+            "equation",
+            "figure",
+            "answer_lines",
+            "answer_canvas",
+        }:
+            current_question = block.get("for_question")
+            q_id = current_q_group[0].get("question_id") or current_q_group[0].get("id")
+            if current_question in {None, q_id}:
+                current_q_group.append(block)
+            else:
+                current_q_group = None
+                groups.append(block)
+        else:
+            current_q_group = None
+            groups.append(block)
+    return groups
+
+
 def build_normalized_docx(
     job: JobConfig,
     manifest: dict[str, Any],
@@ -899,7 +958,13 @@ def build_normalized_docx(
     document = Document(str(job.template))
     _clear_template_body(document)
     _ensure_styles(document, job, layout)
-    _configure_document_settings(document)
+    _configure_document_settings(document, job)
+    if job.source_style_policy == "content_only":
+        for section in document.sections:
+            section.left_margin = Inches(layout.page.inside_margin_mm / 25.4)
+            section.right_margin = Inches(layout.page.outside_margin_mm / 25.4)
+            section.top_margin = Inches(layout.page.top_content_mm / 25.4)
+            section.bottom_margin = Inches((layout.page.height_mm - layout.page.bottom_content_mm) / 25.4)
     document.core_properties.title = str(manifest["book_name"])
     document.core_properties.subject = "Reviewed PDF normalization source"
     manifest_dir = job.content_manifest.parent
@@ -911,33 +976,118 @@ def build_normalized_docx(
             layout,
             page_index,
             getattr(job, "first_content_side", None),
+            job=job,
         )
         page_elements: list[Any] = []
-        previous_block: dict[str, Any] | None = None
-        previous_elements: list[Any] = []
-        for block in page["blocks"]:
-            if previous_block is not None and _keep_transition(previous_block, block):
-                paragraph = _last_paragraph(previous_elements)
-                if paragraph is not None:
-                    paragraph.paragraph_format.keep_with_next = True
-            created = _add_block(
-                document,
-                block,
-                job,
-                layout,
-                context,
-                manifest_dir,
-                image_checks,
-            )
-            for element in created:
-                if hasattr(element, "_p"):
-                    _apply_paragraph_geometry(element, context, layout)
-                    if block.get("kind") == "answer_canvas":
-                        _apply_canvas_width(element, block, context, layout)
-            page_elements.extend(created)
-            previous_block = block
-            previous_elements = created
-
+        if job.source_style_policy == "content_only":
+            groups = _group_page_blocks(page["blocks"])
+            for group in groups:
+                if isinstance(group, list):
+                    q_block = group[0]
+                    table = document.add_table(rows=1, cols=2)
+                    _remove_table_borders(table)
+                    total_width = mm_to_twips(layout.page.live_body_width_mm)
+                    col1_width = 540
+                    col2_width = total_width - col1_width
+                    set_exact_geometry(
+                        table,
+                        (col1_width, col2_width),
+                        indent_twips=context.left_indent_twips,
+                        cell_margins_twips=(0, 0, 0, 0),
+                    )
+                    
+                    cell_1 = table.cell(0, 0)
+                    p_label = cell_1.paragraphs[0]
+                    p_label.style = "Book Question"
+                    p_label.paragraph_format.space_after = Pt(layout.style("question").space_after_points)
+                    run_label = p_label.add_run(str(q_block.get("label", "")))
+                    _apply_run(run_label, {}, job, layout, layout.style("question_label"))
+                    
+                    cell_2 = table.cell(0, 1)
+                    first_p = cell_2.paragraphs[0]
+                    
+                    cell_context = PageContext(
+                        left_indent_twips=0,
+                        right_indent_twips=0,
+                        top_offset_twips=context.top_offset_twips,
+                    )
+                    
+                    previous_block = None
+                    previous_elements = []
+                    question_elements = []
+                    for idx, block in enumerate(group):
+                        if idx == 0:
+                            block_to_render = {**block, "label": ""}
+                        else:
+                            block_to_render = block
+                            
+                        if previous_block is not None and _keep_transition(previous_block, block_to_render):
+                            paragraph = _last_paragraph(previous_elements)
+                            if paragraph is not None:
+                                paragraph.paragraph_format.keep_with_next = True
+                                
+                        created = _add_block(
+                            cell_2,
+                            block_to_render,
+                            job,
+                            layout,
+                            cell_context,
+                            manifest_dir,
+                            image_checks,
+                        )
+                        for element in created:
+                            if hasattr(element, "_p"):
+                                _apply_paragraph_geometry(element, cell_context, layout)
+                                if block_to_render.get("kind") == "answer_canvas":
+                                    _apply_canvas_width(element, block_to_render, cell_context, layout)
+                        question_elements.extend(created)
+                        previous_block = block_to_render
+                        previous_elements = created
+                    
+                    if len(cell_2.paragraphs) > 1 and not first_p.text and not first_p.runs:
+                        _delete_paragraph(first_p)
+                    
+                    page_elements.append(table)
+                else:
+                    created = _add_block(
+                        document,
+                        group,
+                        job,
+                        layout,
+                        context,
+                        manifest_dir,
+                        image_checks,
+                    )
+                    for element in created:
+                        if hasattr(element, "_p"):
+                            _apply_paragraph_geometry(element, context, layout)
+                    page_elements.extend(created)
+        else:
+            previous_block = None
+            previous_elements = []
+            for block in page["blocks"]:
+                if previous_block is not None and _keep_transition(previous_block, block):
+                    paragraph = _last_paragraph(previous_elements)
+                    if paragraph is not None:
+                        paragraph.paragraph_format.keep_with_next = True
+                created = _add_block(
+                    document,
+                    block,
+                    job,
+                    layout,
+                    context,
+                    manifest_dir,
+                    image_checks,
+                )
+                for element in created:
+                    if hasattr(element, "_p"):
+                        _apply_paragraph_geometry(element, context, layout)
+                        if block.get("kind") == "answer_canvas":
+                            _apply_canvas_width(element, block, context, layout)
+                page_elements.extend(created)
+                previous_block = block
+                previous_elements = created
+        
         anchor = _first_paragraph(page_elements)
         if anchor is None:
             raise FrameworkError(f"Source page {page['source_page']} produced no content")
@@ -949,7 +1099,7 @@ def build_normalized_docx(
             f"SourcePdfPage{int(page['source_page']):03d}",
             page_index + 1,
         )
-        if page_index < len(manifest["pages"]) - 1:
+        if job.pagination_policy != "sample_flow" and page_index < len(manifest["pages"]) - 1:
             paragraph = document.add_paragraph(style="Book Body")
             _apply_paragraph_geometry(paragraph, context, layout)
             paragraph.add_run().add_break(WD_BREAK.PAGE)

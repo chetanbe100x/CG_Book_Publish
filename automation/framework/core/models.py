@@ -72,6 +72,8 @@ class JobConfig:
     first_content_side: str = "recto"
     expected_page_count: int | None = None
     render_authority: str = "libreoffice"
+    source_style_policy: str = "source_authority"
+    pagination_policy: str = "source_locked"
 
     @staticmethod
     def load(manifest_path: str | Path) -> "JobConfig":
@@ -148,6 +150,8 @@ class JobConfig:
                 else None
             ),
             render_authority=str(data.get("render_authority", "libreoffice")),
+            source_style_policy=str(data.get("source_style_policy", "source_authority")),
+            pagination_policy=str(data.get("pagination_policy", "source_locked")),
         )
         job.validate()
         return job
@@ -179,6 +183,19 @@ class JobConfig:
             raise FrameworkError("first_content_side must be recto or verso")
         if self.render_authority not in {"word", "libreoffice"}:
             raise FrameworkError("render_authority must be word or libreoffice")
+        if self.source_style_policy not in {"source_authority", "content_only"}:
+            raise FrameworkError(f"Unsupported source_style_policy: {self.source_style_policy}")
+        if self.pagination_policy not in {"source_locked", "sample_flow"}:
+            raise FrameworkError(f"Unsupported pagination_policy: {self.pagination_policy}")
+        if (
+            self.source_style_policy == "content_only"
+            or self.pagination_policy == "sample_flow"
+        ):
+            if self.layout_reference is None:
+                raise FrameworkError(
+                    "layout_reference is required when source_style_policy is content_only "
+                    "or pagination_policy is sample_flow"
+                )
         if self.expected_page_count is not None and self.expected_page_count < 1:
             raise FrameworkError("expected_page_count must be positive")
         expanded_pages: list[int] = []

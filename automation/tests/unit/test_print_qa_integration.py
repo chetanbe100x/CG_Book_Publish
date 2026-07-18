@@ -200,13 +200,14 @@ class PrintQaIntegrationTests(unittest.TestCase):
     def test_short_answer_line_must_reach_260_mm(self) -> None:
         page = _FakePage(
             words=[self._word(bottom_mm=100.0)],
-            lines=[self._line(259.0)],
+            lines=[self._line(250.0)],
         )
-        result = self._analyze(self._job(page_type="short_answer"), page)
+        blocks = [{"kind": "answer_lines", "source_bbox_points": [0.0, 100.0, 500.0, 260.0 * POINTS_PER_MM]}]
+        result = self._analyze(self._job(page_type="short_answer", blocks=blocks), page)
         self.assertFalse(result["passed"])
         self.assertTrue(
             any(
-                "final answer line ends at 259.0 mm" in message
+                "final answer line ends at 250.0 mm" in message
                 for message in result["errors"]
             )
         )
@@ -348,6 +349,7 @@ class PrintQaIntegrationTests(unittest.TestCase):
             self.source_pdf,
             stage="preview",
             source_page_numbers=(),
+            bookmark_pages={},
         )
 
     def test_word_render_rejects_bookmark_on_wrong_physical_page(self) -> None:

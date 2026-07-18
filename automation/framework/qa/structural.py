@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -86,7 +87,17 @@ def validate_output(job: JobConfig, output: Path, source_pages: int | None) -> d
     if template_section is None or result_section is None:
         errors.append("Template or output final section properties are missing")
     elif canonical_xml(template_section) != canonical_xml(result_section):
-        errors.append("Output page geometry/section properties differ from the template")
+        if job.source_style_policy == "content_only":
+            temp_copy = deepcopy(template_section)
+            res_copy = deepcopy(result_section)
+            for copy in (temp_copy, res_copy):
+                pg_mar = copy.find("w:pgMar", NS)
+                if pg_mar is not None:
+                    copy.remove(pg_mar)
+            if canonical_xml(temp_copy) != canonical_xml(res_copy):
+                errors.append("Output page geometry/section properties differ from the template")
+        else:
+            errors.append("Output page geometry/section properties differ from the template")
 
     for name, data in template.parts.items():
         if name.startswith(("word/header", "word/footer")) and result.parts.get(name) != data:

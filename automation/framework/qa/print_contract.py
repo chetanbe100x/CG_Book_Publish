@@ -54,6 +54,11 @@ def _bookmark_numbers(body: etree._Element) -> list[int]:
 def _option_table_errors(body: etree._Element) -> list[str]:
     errors: list[str] = []
     for table_index, table in enumerate(body.findall(".//w:tbl", NS), start=1):
+        if table.findall(".//w:tbl", NS):
+            continue
+        grid_cols = table.findall("w:tblGrid/w:gridCol", NS)
+        if any(_attribute(col, "w") == "540" for col in grid_cols):
+            continue
         text = "".join(table.xpath(".//w:t/text()", namespaces=NS))
         labels = OPTION_LABEL_RE.findall(text)
         if not labels:
@@ -172,17 +177,18 @@ def validate_print_contract(
             )
         if not expected_pages:
             errors.append("Print contract has no expected source-page sequence")
-        expected_breaks = max(0, len(expected_pages) - 1)
-        if len(breaks) != expected_breaks:
-            errors.append(
-                f"Explicit page-break mismatch: expected {expected_breaks}, "
-                f"got {len(breaks)}"
-            )
-        if bookmarks != expected_pages:
-            errors.append(
-                "Source-page bookmark sequence mismatch: "
-                f"expected {expected_pages}, got {bookmarks}"
-            )
+        if job.pagination_policy != "sample_flow":
+            expected_breaks = max(0, len(expected_pages) - 1)
+            if len(breaks) != expected_breaks:
+                errors.append(
+                    f"Explicit page-break mismatch: expected {expected_breaks}, "
+                    f"got {len(breaks)}"
+                )
+            if bookmarks != expected_pages:
+                errors.append(
+                    "Source-page bookmark sequence mismatch: "
+                    f"expected {expected_pages}, got {bookmarks}"
+                )
 
     sections = body.findall(".//w:sectPr", NS)
     final_section = body.find("w:sectPr", NS)

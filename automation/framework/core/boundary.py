@@ -82,23 +82,47 @@ def selected_explicit_page_numbers(
     for section in sections:
         source.remove(section)
 
-    groups: list[list[etree._Element]] = [[]]
-    for child in list(source):
-        page_breaks = child.findall(".//w:br[@w:type='page']", NS)
-        if page_breaks:
-            # The reviewed PDF builder emits a dedicated break paragraph between
-            # source pages. Reject mixed-content boundary elements so selection
-            # cannot silently discard real content.
-            text_value = "".join(child.xpath(".//w:t/text()", namespaces=NS)).strip()
-            drawings = child.findall(".//w:drawing", NS)
-            tables = child.findall(".//w:tbl", NS)
-            if text_value or drawings or tables or len(page_breaks) != 1:
-                raise BoundaryError(
-                    "Explicit page boundary shares an element with source content"
-                )
-            groups.append([])
-            continue
-        groups[-1].append(child)
+    has_page_breaks = any(
+        bool(child.findall(".//w:br[@w:type='page']", NS)) for child in source
+    )
+    if has_page_breaks:
+        groups: list[list[etree._Element]] = [[]]
+        for child in list(source):
+            page_breaks = child.findall(".//w:br[@w:type='page']", NS)
+            if page_breaks:
+                # The reviewed PDF builder emits a dedicated break paragraph between
+                # source pages. Reject mixed-content boundary elements so selection
+                # cannot silently discard real content.
+                text_value = "".join(child.xpath(".//w:t/text()", namespaces=NS)).strip()
+                drawings = child.findall(".//w:drawing", NS)
+                tables = child.findall(".//w:tbl", NS)
+                if text_value or drawings or tables or len(page_breaks) != 1:
+                    raise BoundaryError(
+                        "Explicit page boundary shares an element with source content"
+                    )
+                groups.append([])
+                continue
+            groups[-1].append(child)
+    else:
+        groups = []
+        current_group: list[etree._Element] = []
+        for child in list(source):
+            bm_names = [
+                str(node.get(W + "name"))
+                for node in child.findall(".//w:bookmarkStart", NS)
+                if node.get(W + "name") and node.get(W + "name").startswith(bookmark_prefix)
+            ]
+            if bm_names:
+                if current_group:
+                    groups.append(current_group)
+                current_group = [child]
+            else:
+                if not current_group:
+                    current_group = [child]
+                else:
+                    current_group.append(child)
+        if current_group:
+            groups.append(current_group)
 
     mapped: dict[int, list[etree._Element]] = {}
     for group in groups:

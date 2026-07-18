@@ -40,9 +40,12 @@ def poppler_path() -> Path:
         return Path(configured)
     dependencies = Path(sys.executable).resolve().parent.parent
     candidate = dependencies / "native" / "poppler" / "Library" / "bin"
-    if not (candidate / "pdftoppm.exe").is_file():
-        raise FileNotFoundError(f"Bundled Poppler was not found: {candidate}")
-    return candidate
+    if (candidate / "pdftoppm.exe").is_file():
+        return candidate
+    fallback = Path(r"C:\Users\chetan\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\poppler\Library\bin")
+    if (fallback / "pdftoppm.exe").is_file():
+        return fallback
+    raise FileNotFoundError(f"Bundled Poppler was not found at {candidate} or {fallback}")
 
 
 def render(input_path: Path, output_dir: Path, dpi: int, emit_pdf: bool, verbose: bool) -> list[Path]:

@@ -92,11 +92,17 @@ class PdfIngestSafetyTests(unittest.TestCase):
             job.qa_dir.mkdir(parents=True)
             assert job.content_manifest is not None
             assert job.normalized_source is not None
+            effective_path = job.qa_dir / "effective-manifest.json"
+            effective_path.write_text("{}", encoding="utf-8")
             report = {
                 "source": {"sha256": sha256_file(job.source)},
                 "manifest": {"sha256": sha256_file(job.content_manifest)},
                 "normalized_source": {
                     "sha256": sha256_file(job.normalized_source),
+                },
+                "effective_manifest": {
+                    "path": str(effective_path),
+                    "sha256": sha256_file(effective_path),
                 },
             }
             (job.qa_dir / "ingest.json").write_text(

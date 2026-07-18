@@ -6,6 +6,9 @@ from typing import Any
 
 from lxml import etree
 
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+
 from ..capabilities.typography import missing_fonts, referenced_fonts
 from .boundary import selected_body, selected_explicit_page_numbers
 from .dependencies import (
@@ -17,7 +20,7 @@ from .dependencies import (
     merge_styles,
 )
 from .models import JobConfig, StatusStore, UnsupportedFeatureError, sha256_file
-from .package import DocxPackage, NS, W, write_new_docx, xml_bytes
+from .package import DocxPackage, NS, W, write_new_docx, xml_bytes, parse_xml
 
 
 BLOCKED_XPATHS = {
@@ -47,11 +50,23 @@ def _template_section(body: etree._Element) -> etree._Element:
 def _replace_template_body(
     template_document: etree._Element,
     selected: etree._Element,
+    job: JobConfig,
+    source: DocxPackage,
 ) -> None:
     template_body = template_document.find("w:body", NS)
     if template_body is None:
         raise UnsupportedFeatureError("Template has no document body")
     final_section = _template_section(template_body)
+    
+    if job.source_style_policy == "content_only":
+        source_sect = source.body().find("w:sectPr", NS)
+        if source_sect is not None:
+            source_pg_mar = source_sect.find("w:pgMar", NS)
+            if source_pg_mar is not None:
+                final_pg_mar = final_section.find("w:pgMar", NS)
+                if final_pg_mar is not None:
+                    final_section.replace(final_pg_mar, deepcopy(source_pg_mar))
+
     for child in list(template_body):
         template_body.remove(child)
     for child in list(selected):
@@ -82,6 +97,16 @@ def compose(job: JobConfig, output: Path, source_pages: int | None) -> dict[str,
     selected = selected_composition_body(job, source.body(), source_pages)
     _fidelity_gate(selected)
     destination_parts = template.clone_parts()
+    
+    if job.source_style_policy == "content_only":
+        settings_xml = parse_xml(destination_parts["word/settings.xml"], "word/settings.xml")
+        mirror = settings_xml.find("w:mirrorMargins", NS)
+        if mirror is None:
+            mirror = OxmlElement("w:mirrorMargins")
+            mirror.set(qn("w:val"), "true")
+            settings_xml.append(mirror)
+            destination_parts["word/settings.xml"] = xml_bytes(settings_xml)
+
     style_mapping, copied_styles = merge_styles(source, destination_parts, selected)
     font_roots = [selected, *copied_styles]
     fonts = sorted({font for root in font_roots for font in referenced_fonts(root)}, key=str.casefold)
@@ -93,7 +118,7 @@ def compose(job: JobConfig, output: Path, source_pages: int | None) -> dict[str,
     relationship_mapping = RelationshipCopier(source, destination_parts).copy_document_relationships(selected)
 
     template_document = template.document()
-    _replace_template_body(template_document, selected)
+    _replace_template_body(template_document, selected, job, source)
     destination_parts["word/document.xml"] = xml_bytes(template_document)
     disable_automatic_field_updates(destination_parts)
     disable_automatic_image_compression(destination_parts)

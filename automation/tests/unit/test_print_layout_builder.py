@@ -22,16 +22,16 @@ class PrintLayoutProfileTests(unittest.TestCase):
         self.assertEqual(profile.page.live_body_width_mm, 170.0)
         self.assertEqual(profile.page.margins_for_page(0), (22.0, 18.0))
         self.assertEqual(profile.page.margins_for_page(1), (18.0, 22.0))
-        self.assertEqual(profile.style("chapter").size_points, 15.0)
-        self.assertEqual(profile.style("question").size_points, 14.0)
-        self.assertEqual(profile.style("english").size_points, 12.0)
-        self.assertEqual(profile.style("option").size_points, 14.0)
-        self.assertEqual(profile.inline_math_points, 14.5)
-        self.assertEqual(profile.style("english").color, "64748B")
+        self.assertEqual(profile.style("chapter").size_points, 24.0)
+        self.assertEqual(profile.style("question").size_points, 16.0)
+        self.assertEqual(profile.style("english").size_points, 16.0)
+        self.assertEqual(profile.style("option").size_points, 16.0)
+        self.assertEqual(profile.inline_math_points, 16.0)
+        self.assertEqual(profile.style("english").color, "000000")
         self.assertEqual(profile.options.table_width_twips, 9220)
         self.assertEqual(profile.options.two_column_widths_twips, (4700, 4520))
-        self.assertEqual(profile.answer_space.default_pitch_points, 30.5)
-        self.assertEqual(profile.answer_space.generous_pitch_points, 34.5)
+        self.assertEqual(profile.answer_space.default_pitch_points, 24.0)
+        self.assertEqual(profile.answer_space.generous_pitch_points, 27.0)
         self.assertEqual(profile.images.formula_min_dpi, 300.0)
 
     def test_formula_width_controls_safe_option_grid_fallback(self) -> None:
@@ -263,7 +263,7 @@ class PrintLayoutBuilderTests(unittest.TestCase):
             dotted = document.findall(".//w:pBdr/w:bottom[@w:val='dotted']", NS)
             self.assertEqual(len(dotted), 2)
             self.assertEqual(len(document.findall(".//w:tab", NS)), 0)
-            exact_pitch = document.findall(".//w:spacing[@w:line='610'][@w:lineRule='exact']", NS)
+            exact_pitch = document.findall(".//w:spacing[@w:line='480'][@w:lineRule='exact']", NS)
             self.assertEqual(len(exact_pitch), 2)
             self.assertEqual(len(document.findall(".//w:keepLines", NS)), 0)
 
@@ -275,7 +275,7 @@ class PrintLayoutBuilderTests(unittest.TestCase):
             self.assertEqual(picture_properties.get("descr"), "A sharp mathematical fraction")
 
             chapter_style = styles.xpath(".//w:style[w:name[@w:val='Book Chapter']]", namespaces=NS)[0]
-            self.assertEqual(chapter_style.find("w:rPr/w:sz", NS).get(W + "val"), "30")
+            self.assertEqual(chapter_style.find("w:rPr/w:sz", NS).get(W + "val"), "48")
 
     def test_builder_rejects_low_resolution_formula_image(self) -> None:
         root = Path(__file__).resolve().parents[3]

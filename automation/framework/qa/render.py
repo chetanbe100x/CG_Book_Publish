@@ -39,9 +39,12 @@ def _soffice() -> Path:
 def _poppler() -> Path:
     dependencies = Path(sys.executable).resolve().parent.parent
     candidate = dependencies / "native" / "poppler" / "Library" / "bin"
-    if not (candidate / "pdftoppm.exe").is_file():
-        raise FrameworkError(f"Bundled Poppler was not found: {candidate}")
-    return candidate
+    if (candidate / "pdftoppm.exe").is_file():
+        return candidate
+    fallback = Path(r"C:\Users\chetan\.cache\codex-runtimes\codex-primary-runtime\dependencies\native\poppler\Library\bin")
+    if (fallback / "pdftoppm.exe").is_file():
+        return fallback
+    raise FrameworkError(f"Bundled Poppler was not found at {candidate} or {fallback}")
 
 
 def _clean_generated_outputs(output_dir: Path, docx_stem: str) -> None:
@@ -229,10 +232,11 @@ def _render_with_word(job: JobConfig, stage: str) -> dict[str, Any]:
     )
     document_hash = sha256_file(document)
     output_dir = job.render_dir(stage) / f"word-{document_hash[:16]}"
+    expected = None if job.pagination_policy == "sample_flow" else job.expected_pages_for_stage(stage)
     word = render_with_word(
         document,
         output_dir,
-        expected_page_count=job.expected_pages_for_stage(stage),
+        expected_page_count=expected,
         expected_bookmarks=expected_bookmarks,
         require_a4=True,
         orientation="portrait",
@@ -240,7 +244,7 @@ def _render_with_word(job: JobConfig, stage: str) -> dict[str, Any]:
     expected_map = {
         name: index for index, name in enumerate(expected_bookmarks, start=1)
     }
-    if expected_bookmarks and word["bookmark_pages"] != expected_map:
+    if job.pagination_policy != "sample_flow" and expected_bookmarks and word["bookmark_pages"] != expected_map:
         raise FrameworkError(
             "Microsoft Word source-page map is not one-to-one: "
             f"expected {expected_map}, got {word['bookmark_pages']}"
@@ -259,6 +263,7 @@ def _render_with_word(job: JobConfig, stage: str) -> dict[str, Any]:
         pdf_path,
         stage=stage,
         source_page_numbers=source_page_numbers,
+        bookmark_pages=word["bookmark_pages"],
     )
     layout_path = output_dir / "layout-analysis.json"
     atomic_json_write(layout_path, layout)

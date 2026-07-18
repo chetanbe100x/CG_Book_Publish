@@ -121,6 +121,44 @@ class JobTests(unittest.TestCase):
         with self.assertRaisesRegex(IntegrityError, "protected input"):
             job.validate()
 
+    def test_job_config_validates_policies(self) -> None:
+        root = Path(__file__).resolve().parents[3]
+        job = JobConfig(
+            manifest_path=root / "unused-job.json",
+            job_id="collision-test",
+            school_class="12",
+            subject="Maths",
+            source=root / "12 CLASS MATHS.docx",
+            template=root / "Book_Template.docx",
+            preview_output=root / "unused-preview.docx",
+            final_output=root / "unused-final.docx",
+            approved_reference=None,
+            qa_dir=root / "unused-qa",
+            source_style_policy="content_only",
+            pagination_policy="source_locked",
+            layout_reference=None,
+        )
+        with self.assertRaisesRegex(FrameworkError, "layout_reference is required"):
+            job.validate()
+
+        job2 = JobConfig(
+            manifest_path=root / "unused-job.json",
+            job_id="collision-test",
+            school_class="12",
+            subject="Maths",
+            source=root / "12 CLASS MATHS.docx",
+            template=root / "Book_Template.docx",
+            preview_output=root / "unused-preview.docx",
+            final_output=root / "unused-final.docx",
+            approved_reference=None,
+            qa_dir=root / "unused-qa",
+            source_style_policy="source_authority",
+            pagination_policy="sample_flow",
+            layout_reference=None,
+        )
+        with self.assertRaisesRegex(FrameworkError, "layout_reference is required"):
+            job2.validate()
+
     def test_pdf_job_loads_explicit_ingestion_contract(self) -> None:
         root = Path(__file__).resolve().parents[3]
 
