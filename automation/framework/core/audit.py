@@ -7,6 +7,7 @@ from typing import Any
 from lxml import etree
 
 from ..capabilities import equations, fields_links, images_vml, numbering, sections, tables, typography
+from ..ingest.pdf import pdf_inventory
 from .models import JobConfig, StatusStore, atomic_json_write, sha256_file, utc_now
 from .package import DocxPackage, NS, R, W, part_hash
 
@@ -139,6 +140,11 @@ def document_inventory(path: str | Path, include_parts: bool = True) -> dict[str
 
 
 def audit_job(job: JobConfig) -> dict[str, Any]:
+    source_inventory = (
+        pdf_inventory(job.source)
+        if job.source_type == "pdf"
+        else document_inventory(job.source)
+    )
     result: dict[str, Any] = {
         "schema_version": 1,
         "generated_at": utc_now(),
@@ -146,14 +152,19 @@ def audit_job(job: JobConfig) -> dict[str, Any]:
             "job_id": job.job_id,
             "class": job.school_class,
             "subject": job.subject,
+            "source_type": job.source_type,
             "subject_profile": job.subject_profile,
             "preview_source_pages": job.preview_source_pages,
+            "preview_source_page_numbers": list(job.preview_source_page_numbers),
             "content_policy": job.content_policy,
             "typography_policy": job.typography_policy,
+            "boundary_strategy": job.boundary_strategy,
         },
-        "source": document_inventory(job.source),
+        "source": source_inventory,
         "template": document_inventory(job.template),
     }
+    if job.normalized_source is not None and job.normalized_source.is_file():
+        result["normalized_source"] = document_inventory(job.normalized_source)
     if job.approved_reference is not None:
         result["approved_reference"] = document_inventory(job.approved_reference)
     atomic_json_write(job.audit_path, result)
@@ -164,6 +175,16 @@ def audit_job(job: JobConfig) -> dict[str, Any]:
         approved_reference_sha256=(
             result.get("approved_reference", {}).get("sha256")
             if isinstance(result.get("approved_reference"), dict)
+            else None
+        ),
+        normalized_source_sha256=(
+            sha256_file(job.normalized_source)
+            if job.normalized_source is not None and job.normalized_source.is_file()
+            else None
+        ),
+        content_manifest_sha256=(
+            sha256_file(job.content_manifest)
+            if job.content_manifest is not None and job.content_manifest.is_file()
             else None
         ),
     )

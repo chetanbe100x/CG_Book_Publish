@@ -55,9 +55,15 @@ class JobConfig:
     final_output: Path
     approved_reference: Path | None
     qa_dir: Path
+    source_type: str = "docx"
+    normalized_source: Path | None = None
+    content_manifest: Path | None = None
     preview_source_pages: int = 7
+    preview_source_page_numbers: tuple[int, ...] = field(default_factory=tuple)
     content_policy: str = "layout_only"
     typography_policy: str = "preserve_source"
+    boundary_strategy: str = "saved_rendered"
+    pdf_font_map: tuple[tuple[str, str], ...] = field(default_factory=tuple)
     subject_profile: str = "science"
     adapter: str | None = None
     required_fonts: tuple[str, ...] = field(default_factory=tuple)
@@ -77,20 +83,43 @@ class JobConfig:
             candidate = Path(raw)
             return (candidate if candidate.is_absolute() else base / candidate).resolve()
 
+        source = resolve("source")
+        assert source is not None
+        source_type = str(data.get("source_type", source.suffix.lstrip("."))).casefold()
+        normalized_source = resolve("normalized_source", optional=True)
+        content_manifest = resolve("content_manifest", optional=True)
+        page_numbers = tuple(int(v) for v in data.get("preview_source_page_numbers", []))
+        font_map_value = data.get("pdf_font_map", {})
+        if not isinstance(font_map_value, dict):
+            raise FrameworkError("pdf_font_map must be an object")
+
         job = JobConfig(
             manifest_path=manifest,
             job_id=str(data["job_id"]),
             school_class=str(data["class"]),
             subject=str(data["subject"]),
-            source=resolve("source"),
+            source=source,
             template=resolve("template"),
             preview_output=resolve("preview_output"),
             final_output=resolve("final_output"),
             approved_reference=resolve("approved_reference", optional=True),
             qa_dir=resolve("qa_dir"),
+            source_type=source_type,
+            normalized_source=normalized_source,
+            content_manifest=content_manifest,
             preview_source_pages=int(data.get("preview_source_pages", 7)),
+            preview_source_page_numbers=page_numbers,
             content_policy=str(data.get("content_policy", "layout_only")),
             typography_policy=str(data.get("typography_policy", "preserve_source")),
+            boundary_strategy=str(
+                data.get(
+                    "boundary_strategy",
+                    "explicit" if source_type == "pdf" else "saved_rendered",
+                )
+            ),
+            pdf_font_map=tuple(
+                sorted((str(name), str(value)) for name, value in font_map_value.items())
+            ),
             subject_profile=str(data.get("subject_profile", "science")),
             adapter=data.get("adapter"),
             required_fonts=tuple(str(v) for v in data.get("required_fonts", [])),
@@ -100,20 +129,90 @@ class JobConfig:
 
     def validate(self) -> None:
         if not self.source.is_file():
-            raise FrameworkError(f"Source DOCX not found: {self.source}")
+            raise FrameworkError(f"Source file not found: {self.source}")
         if not self.template.is_file():
             raise FrameworkError(f"Template DOCX not found: {self.template}")
         if self.approved_reference is not None and not self.approved_reference.is_file():
             raise FrameworkError(f"Approved reference not found: {self.approved_reference}")
         if self.preview_source_pages < 1:
             raise FrameworkError("preview_source_pages must be positive")
-        if self.content_policy != "layout_only":
-            raise FrameworkError("Only layout_only content policy is implemented")
-        if self.typography_policy != "preserve_source":
-            raise FrameworkError("Only preserve_source typography policy is implemented")
+        if self.source_type not in {"docx", "pdf"}:
+            raise FrameworkError(f"Unsupported source_type: {self.source_type}")
+        if self.source.suffix.casefold() != f".{self.source_type}":
+            raise FrameworkError(
+                f"source_type {self.source_type} does not match source suffix: {self.source}"
+            )
+        if self.content_policy not in {"layout_only", "reconstruct_content"}:
+            raise FrameworkError(f"Unsupported content_policy: {self.content_policy}")
+        if self.typography_policy not in {"preserve_source", "mapped_pdf_fonts"}:
+            raise FrameworkError(f"Unsupported typography_policy: {self.typography_policy}")
+        if self.boundary_strategy not in {"saved_rendered", "explicit"}:
+            raise FrameworkError(f"Unsupported boundary_strategy: {self.boundary_strategy}")
+        if len(set(self.preview_source_page_numbers)) != len(
+            self.preview_source_page_numbers
+        ):
+            raise FrameworkError("preview_source_page_numbers must be unique")
+        if any(value < 1 for value in self.preview_source_page_numbers):
+            raise FrameworkError("preview_source_page_numbers must be positive")
+        if self.preview_source_page_numbers and (
+            len(self.preview_source_page_numbers) != self.preview_source_pages
+        ):
+            raise FrameworkError(
+                "preview_source_pages must match preview_source_page_numbers length"
+            )
+        if self.source_type == "docx":
+            if self.content_policy != "layout_only":
+                raise FrameworkError("DOCX sources require layout_only content_policy")
+            if self.typography_policy != "preserve_source":
+                raise FrameworkError("DOCX sources require preserve_source typography_policy")
+        else:
+            if self.normalized_source is None:
+                raise FrameworkError("PDF jobs require normalized_source")
+            if self.content_manifest is None:
+                raise FrameworkError("PDF jobs require content_manifest")
+            if self.content_policy != "reconstruct_content":
+                raise FrameworkError("PDF jobs require reconstruct_content content_policy")
+            if self.typography_policy != "mapped_pdf_fonts":
+                raise FrameworkError("PDF jobs require mapped_pdf_fonts typography_policy")
+            if self.boundary_strategy != "explicit":
+                raise FrameworkError("PDF jobs require explicit boundary_strategy")
+            if not self.preview_source_page_numbers:
+                raise FrameworkError("PDF jobs require preview_source_page_numbers")
+            roles = {name for name, _ in self.pdf_font_map}
+            missing_roles = {"hindi", "latin", "math"} - roles
+            if missing_roles:
+                raise FrameworkError(
+                    "PDF jobs require font mappings for: "
+                    + ", ".join(sorted(missing_roles))
+                )
         protected = {self.source, self.template}
         if self.preview_output in protected or self.final_output in protected:
             raise IntegrityError("Output path collides with a protected input")
+        if self.normalized_source is not None and self.normalized_source in protected:
+            raise IntegrityError("Normalized source path collides with a protected input")
+
+    @property
+    def composition_source(self) -> Path:
+        if self.source_type == "docx":
+            return self.source
+        assert self.normalized_source is not None
+        if not self.normalized_source.is_file():
+            raise FrameworkError(
+                f"Normalized PDF source has not been generated: {self.normalized_source}"
+            )
+        return self.normalized_source
+
+    @property
+    def preview_page_count(self) -> int:
+        if self.preview_source_page_numbers:
+            return len(self.preview_source_page_numbers)
+        return self.preview_source_pages
+
+    def font_for(self, role: str) -> str:
+        mapping = dict(self.pdf_font_map)
+        if role not in mapping:
+            raise FrameworkError(f"No PDF font mapping configured for role: {role}")
+        return mapping[role]
 
     @property
     def audit_path(self) -> Path:
@@ -190,4 +289,11 @@ class StatusStore:
             expected = status.get(f"approved_{label}_sha256")
             if expected and sha256_file(path) != expected:
                 raise IntegrityError(f"{label.title()} changed after preview approval")
+        for label, path in (
+            ("normalized_source", self.job.normalized_source),
+            ("content_manifest", self.job.content_manifest),
+        ):
+            expected = status.get(f"approved_{label}_sha256")
+            if expected and (path is None or not path.is_file() or sha256_file(path) != expected):
+                raise IntegrityError(f"{label.replace('_', ' ').title()} changed after approval")
         return status

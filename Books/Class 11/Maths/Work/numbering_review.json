@@ -1,0 +1,110 @@
+{
+  "checks": [
+    {
+      "source_ids": [
+        "Maths_11th.pdf:p003"
+      ],
+      "anchor": "The Intersection of sets",
+      "expected_question_label": "Q1",
+      "expected_option_labels": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ]
+    },
+    {
+      "source_ids": [
+        "Maths_11th.pdf:p003"
+      ],
+      "anchor": "What do the shaded parts represent",
+      "expected_question_label": "Q2",
+      "expected_option_labels": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ]
+    },
+    {
+      "source_ids": [
+        "Maths_11th.pdf:p019"
+      ],
+      "anchor": "write the relation between P and Q",
+      "expected_question_label": "Q6",
+      "expected_option_labels": []
+    },
+    {
+      "source_ids": [
+        "Maths_11th.pdf:p019"
+      ],
+      "anchor": "Draw the graph for",
+      "expected_question_label": "Q7",
+      "expected_option_labels": []
+    },
+    {
+      "source_ids": [
+        "Maths_11th.pdf:p047"
+      ],
+      "anchor": "then find the value of n",
+      "expected_question_label": "Q4",
+      "expected_option_labels": []
+    },
+    {
+      "source_ids": [
+        "Maths_11th.pdf:p047"
+      ],
+      "anchor": "cricket team of 11 players",
+      "expected_question_label": "Q5",
+      "expected_option_labels": []
+    },
+    {
+      "source_ids": [
+        "Maths_11th.pdf:p064"
+      ],
+      "anchor": "passing through origin",
+      "expected_question_label": "Q5",
+      "expected_option_labels": []
+    },
+    {
+      "source_ids": [
+        "Maths_11th.pdf:p080"
+      ],
+      "anchor": "centroid of a triangle",
+      "expected_question_label": "Q13",
+      "expected_option_labels": []
+    },
+    {
+      "source_ids": [
+        "Maths_11th.pdf:p080"
+      ],
+      "anchor": "vertices of a",
+      "expected_question_label": "Q14",
+      "expected_option_labels": []
+    },
+    {
+      "source_ids": [
+        "Maths_11th.pdf:p098"
+      ],
+      "anchor": "highest variability in marks",
+      "expected_question_label": "Q15",
+      "expected_option_labels": []
+    },
+    {
+      "source_ids": [
+        "Maths_11th.pdf:p104"
+      ],
+      "anchor": "P (E ∩ F)",
+      "expected_question_label": "Q16",
+      "expected_option_labels": []
+    },
+    {
+      "source_ids": [
+        "Maths_11th.pdf:p104"
+      ],
+      "anchor": "well shuffled deck of 52 cards",
+      "expected_question_label": "Q17",
+      "expected_option_labels": []
+    }
+  ]
+}

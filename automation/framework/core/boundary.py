@@ -24,21 +24,45 @@ def _prune_after(element: etree._Element, target: etree._Element, stop: etree._E
         current = parent
 
 
-def selected_body(source_body: etree._Element, source_pages: int | None) -> etree._Element:
+def selected_body(
+    source_body: etree._Element,
+    source_pages: int | None,
+    *,
+    strategy: str = "saved_rendered",
+) -> etree._Element:
     body = deepcopy(source_body)
     for section in body.findall("w:sectPr", NS):
         body.remove(section)
     if source_pages is None:
         return body
-    breaks = body.findall(".//w:lastRenderedPageBreak", NS)
-    if len(breaks) < source_pages:
-        raise BoundaryError(
-            f"Source contains {len(breaks)} saved Word page boundaries; "
-            f"cannot select page {source_pages} without a reviewed adapter"
-        )
-    target = breaks[source_pages - 1]
-    _prune_after(body, target, body)
-    return body
+    if strategy == "saved_rendered":
+        breaks = body.findall(".//w:lastRenderedPageBreak", NS)
+        if len(breaks) < source_pages:
+            raise BoundaryError(
+                f"Source contains {len(breaks)} saved Word page boundaries; "
+                f"cannot select page {source_pages} without a reviewed adapter"
+            )
+        target = breaks[source_pages - 1]
+        _prune_after(body, target, body)
+        return body
+    if strategy == "explicit":
+        breaks = body.findall(".//w:br[@w:type='page']", NS)
+        page_count = len(breaks) + 1
+        if source_pages > page_count:
+            raise BoundaryError(
+                f"Source contains {page_count} explicitly delimited pages; "
+                f"cannot select page {source_pages}"
+            )
+        if source_pages == page_count:
+            return body
+        target = breaks[source_pages - 1]
+        _prune_after(body, target, body)
+        parent = target.getparent()
+        if parent is None:
+            raise BoundaryError("Explicit page boundary is detached")
+        parent.remove(target)
+        return body
+    raise BoundaryError(f"Unknown page-boundary strategy: {strategy}")
 
 
 def boundary_inventory(source_body: etree._Element) -> dict[str, int]:

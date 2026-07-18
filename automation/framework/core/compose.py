@@ -60,9 +60,13 @@ def _replace_template_body(
 
 
 def compose(job: JobConfig, output: Path, source_pages: int | None) -> dict[str, Any]:
-    source = DocxPackage(job.source)
+    source = DocxPackage(job.composition_source)
     template = DocxPackage(job.template)
-    selected = selected_body(source.body(), source_pages)
+    selected = selected_body(
+        source.body(),
+        source_pages,
+        strategy=job.boundary_strategy,
+    )
     _fidelity_gate(selected)
     destination_parts = template.clone_parts()
     style_mapping, copied_styles = merge_styles(source, destination_parts, selected)
@@ -84,6 +88,7 @@ def compose(job: JobConfig, output: Path, source_pages: int | None) -> dict[str,
         "output": str(output),
         "sha256": sha256_file(output),
         "source_pages": source_pages,
+        "source_page_numbers": list(job.preview_source_page_numbers),
         "style_mapping": style_mapping,
         "numbering_mapping": numbering_mapping,
         "merged_fonts": merged_fonts,
@@ -92,18 +97,37 @@ def compose(job: JobConfig, output: Path, source_pages: int | None) -> dict[str,
 
 
 def create_preview(job: JobConfig) -> dict[str, Any]:
-    result = compose(job, job.preview_output, job.preview_source_pages)
+    result = compose(job, job.preview_output, job.preview_page_count)
     StatusStore(job).transition(
         "preview_generated",
         preview_sha256=result["sha256"],
         source_sha256=sha256_file(job.source),
         template_sha256=sha256_file(job.template),
+        normalized_source_sha256=(
+            sha256_file(job.normalized_source)
+            if job.normalized_source is not None
+            else None
+        ),
+        content_manifest_sha256=(
+            sha256_file(job.content_manifest)
+            if job.content_manifest is not None
+            else None
+        ),
     )
     return result
 
 
 def create_full(job: JobConfig) -> dict[str, Any]:
     StatusStore(job).require_approved_preview()
+    if job.source_type == "pdf":
+        from ..ingest.ir import manifest_scope
+
+        assert job.content_manifest is not None
+        if manifest_scope(job.content_manifest) != "full":
+            raise UnsupportedFeatureError(
+                "Full conversion is blocked because the reviewed PDF manifest "
+                "contains only the representative preview pages"
+            )
     result = compose(job, job.final_output, None)
     StatusStore(job).transition("full_generated", final_sha256=result["sha256"])
     return result

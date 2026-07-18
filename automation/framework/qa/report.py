@@ -41,9 +41,10 @@ preserve-only.
 ## Editable Slot
 
 - Package part: `word/document.xml`
-- Slot: children of `w:body` before final `w:sectPr`
-- Policy: replace from the audited source while preserving source text,
-  typography, equations, numbering, tables, drawings, VML, and formatting.
+- Slot: children of `w:body` before final `w:sectPr`.
+- Policy: replace from the audited DOCX source or reviewed PDF normalization
+  source while preserving verified text, typography, equations, numbering,
+  tables, drawings, VML, and formatting.
 
 ## Package Preservation
 
@@ -108,6 +109,8 @@ def write_qa_report(
         [
             "Protected files:",
             f"- Source: {job.source}",
+            f"- Normalized source: {job.normalized_source or 'not applicable'}",
+            f"- Content manifest: {job.content_manifest or 'not applicable'}",
             f"- Template: {job.template}",
             f"- Approved reference: {job.approved_reference or 'not configured'}",
             "",

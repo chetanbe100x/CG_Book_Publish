@@ -7,4 +7,17 @@ __pycache__/
 .vscode/
 
 # Temporary directories
+.tmp/
 .render_tmp/
+
+# Generated book QA/review artifacts
+Books/**/QA/
+Books/**/Preview/
+Books/**/Review/
+
+# Generated book work products; retain reproducibility inputs only
+Books/**/Work/*
+!Books/**/Work/book_ir.full.json
+!Books/**/Work/numbering_review.json
+!Books/**/Work/figures/
+!Books/**/Work/figures/**

@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "profile": "maths",
+  "preferred_preview_features": [
+    "bilingual_questions",
+    "multiple_choice_options",
+    "equations",
+    "technical_figures",
+    "answer_space",
+    "tables"
+  ],
+  "pdf_font_roles": {
+    "hindi": "Nirmala UI",
+    "latin": "Arial",
+    "math": "Cambria Math"
+  }
+}

@@ -8,12 +8,15 @@ from pathlib import Path
 from framework.core.audit import audit_job
 from framework.core.compose import compose, create_full, create_preview
 from framework.core.models import FrameworkError, JobConfig, StatusStore, sha256_file
+from framework.ingest.pdf import ingest_pdf_job
 from framework.qa.render import render_document
 from framework.qa.report import write_artifact, write_qa_report
 from framework.qa.structural import compare_with_approved, validate_output
 
 
 def _print(value: object) -> None:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     print(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True))
 
 
@@ -24,13 +27,21 @@ def command_audit(job: JobConfig) -> dict:
 
 
 def command_preview(job: JobConfig) -> dict:
-    if not job.audit_path.exists():
+    ingested = False
+    if (
+        job.source_type == "pdf"
+        and job.normalized_source is not None
+        and not job.normalized_source.is_file()
+    ):
+        ingest_pdf_job(job)
+        ingested = True
+    if ingested or not job.audit_path.exists():
         command_audit(job)
     return create_preview(job)
 
 
 def command_qa(job: JobConfig, stage: str) -> dict:
-    source_pages = job.preview_source_pages if stage == "preview" else None
+    source_pages = job.preview_page_count if stage == "preview" else None
     document = job.docx_for_stage(stage)
     validation = (
         validate_output(job, document, source_pages)
@@ -84,11 +95,22 @@ def command_approve(job: JobConfig) -> dict:
     status = StatusStore(job).load()
     if status.get("state") != "preview_qa_passed":
         raise FrameworkError("Preview approval requires a passed preview QA run")
+    values = {
+        "approved_preview_sha256": sha256_file(job.preview_output),
+        "approved_source_sha256": sha256_file(job.source),
+        "approved_template_sha256": sha256_file(job.template),
+    }
+    if job.normalized_source is not None:
+        values["approved_normalized_source_sha256"] = sha256_file(
+            job.normalized_source
+        )
+    if job.content_manifest is not None:
+        values["approved_content_manifest_sha256"] = sha256_file(
+            job.content_manifest
+        )
     return StatusStore(job).transition(
         "preview_approved",
-        approved_preview_sha256=sha256_file(job.preview_output),
-        approved_source_sha256=sha256_file(job.source),
-        approved_template_sha256=sha256_file(job.template),
+        **values,
     )
 
 
@@ -112,7 +134,15 @@ def command_regression(job: JobConfig) -> dict:
 def build_parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(description="Accuracy-first DOCX book conversion pipeline")
     subparsers = root.add_subparsers(dest="command", required=True)
-    for name in ("audit", "preview", "approve-preview", "full", "status", "regression"):
+    for name in (
+        "audit",
+        "ingest",
+        "preview",
+        "approve-preview",
+        "full",
+        "status",
+        "regression",
+    ):
         command = subparsers.add_parser(name)
         command.add_argument("--job", required=True)
     qa = subparsers.add_parser("qa")
@@ -127,6 +157,8 @@ def main() -> int:
         job = JobConfig.load(args.job)
         if args.command == "audit":
             result = command_audit(job)
+        elif args.command == "ingest":
+            result = ingest_pdf_job(job)
         elif args.command == "preview":
             result = command_preview(job)
         elif args.command == "qa":

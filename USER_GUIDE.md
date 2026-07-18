@@ -2,13 +2,14 @@
 
 ## 1. What This Framework Does
 
-The framework places the contents of an input Word book into the approved page template while preserving text, fonts, sizes, equations, numbering, tables, images, answer lines, and direct formatting.
+The framework places the contents of an input Word or PDF book into the approved page template while preserving text, fonts, equations, numbering, tables, images, and page-level content relationships.
 
 Every new book follows the same controlled process:
 
 ```text
-Input -> Audit -> Seven-source-page preview -> QA -> User approval
-      -> Complete conversion -> Final QA -> Final book
+DOCX -> Audit -------------------------------> Preview -> QA -> Approval
+PDF  -> Audit -> Reviewed Book IR -> DOCX normalization -^
+     -> Complete conversion -> Final QA -> Final book
 ```
 
 The original input, template, approved preview, and final output are never overwritten.
@@ -17,10 +18,10 @@ The original input, template, approved preview, and final output are never overw
 
 Confirm that:
 
-- The complete book is available as one `.docx` file.
+- The complete book is available as one `.docx` or readable, unencrypted `.pdf` file.
 - `D:\Experiments_Projects\CG_Book_Publish\Book_Template.docx` exists.
 - Microsoft Word and LibreOffice are installed.
-- Fonts used by the input book are installed on the computer.
+- Fonts used by a DOCX input are installed on the computer. PDF jobs must define an installed Hindi/Latin/math font map.
 - The input DOCX is closed in Word before processing.
 
 LibreOffice is used only to generate QA images. It does not save the delivered DOCX.
@@ -36,7 +37,8 @@ D:\Experiments_Projects\CG_Book_Publish\
     \-- Class 11\
         \-- Maths\
             \-- Input\
-                \-- 11 CLASS MATHS.docx
+                +-- 11 CLASS MATHS.docx
+                \-- Maths_11th.pdf
 ```
 
 Only place the source document in `Input`. The process creates these automatically:
@@ -47,7 +49,9 @@ Books\Class 11\Maths\
 +-- Input\
 +-- Preview\
 +-- Final\
-\-- QA\
++-- QA\
++-- Review\
+\-- Work\
 ```
 
 Do not place or edit files manually in `Preview`, `Final`, or `QA`.
@@ -76,7 +80,19 @@ the complete conversion. Do not modify or overwrite the input or template.
 Stop and wait for my explicit approval.
 ```
 
-The preview may contain more than seven output pages because the template has different margins and usable page space. "Seven pages" always means seven saved pages from the source document.
+For DOCX input, the preview may contain more than seven output pages because the template has different margins and usable page space. "Seven pages" means seven saved source pages.
+
+For PDF input, add these instructions to the prompt:
+
+```text
+Treat the PDF as immutable. Audit it, then create a reviewed Book IR manifest
+for seven representative source pages. Type the content into an editable
+normalized DOCX, map Hindi/Latin/math fonts explicitly, and use a book-specific
+adapter only for source-specific figure extraction. Run ingest, audit, preview,
+structural QA, and page-by-page visual QA. Do not run the full conversion.
+```
+
+The PDF path is `PDF -> reviewed Book IR -> editable normalized DOCX -> existing composer`. The full conversion remains blocked until the Book IR scope is `full` and the preview hash is explicitly approved.
 
 ## 5. Review the Preview
 
@@ -89,6 +105,7 @@ Books\<Class>\<Subject>\Preview\
 Check:
 
 - No text, equations, tables, or images are missing.
+- PDF text is editable and Hindi/math glyphs are real characters, not raster text or question-mark substitutions.
 - Fonts, sizes, bold, italics, and alignment match the source.
 - Content remains inside the decorative frame.
 - Page numbers start at 1 and continue correctly.
@@ -147,6 +164,10 @@ The process stops instead of substituting a font. Install the exact font reporte
 ### Input has no saved page boundaries
 
 Open the input in Microsoft Word, allow it to paginate completely, save it as DOCX, close Word, and retry.
+
+### PDF text extraction is corrupt
+
+Do not feed corrupted extraction directly into composition. Build or correct the reviewed Book IR, record every source page and source ID, then rerun `ingest`. Low-confidence blocks must remain in the review queue and block full conversion.
 
 ### LibreOffice render failure
 

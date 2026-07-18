@@ -54,10 +54,14 @@ def validate_output(job: JobConfig, output: Path, source_pages: int | None) -> d
     warnings: list[str] = []
     if not output.is_file():
         return {"passed": False, "errors": [f"Output is missing: {output}"], "warnings": []}
-    source = DocxPackage(job.source)
+    source = DocxPackage(job.composition_source)
     template = DocxPackage(job.template)
     result = DocxPackage(output)
-    selected = selected_body(source.body(), source_pages)
+    selected = selected_body(
+        source.body(),
+        source_pages,
+        strategy=job.boundary_strategy,
+    )
 
     expected_tokens = _tokens_from_root(selected)
     actual_tokens = body_tokens(output)
