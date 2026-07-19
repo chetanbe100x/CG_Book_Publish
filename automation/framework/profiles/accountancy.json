@@ -1,0 +1,72 @@
+{
+  "profile": "accountancy",
+  "audit_hints": [
+    "ledger and dense table geometry",
+    "tab stops and numeric alignment",
+    "landscape sections",
+    "repeating table headers"
+  ],
+  "preferred_preview_features": [
+    "bilingual_questions",
+    "multiple_choice_options",
+    "answer_space",
+    "tables"
+  ],
+  "print_layout": {
+    "page": {
+      "width_mm": 210.0,
+      "height_mm": 297.0,
+      "live_body_width_mm": 159.2,
+      "inside_margin_mm": 25.4,
+      "outside_margin_mm": 25.4,
+      "top_content_mm": 25.4,
+      "bottom_content_mm": 274.8,
+      "first_content_side": "recto"
+    },
+    "styles": {
+      "body": {"font_role": "latin", "size_points": 10.5, "color": "000000", "space_after_points": 2.0, "line_spacing": 1.05},
+      "hindi": {"font_role": "hindi", "size_points": 11.5, "color": "000000", "space_after_points": 2.0, "line_spacing": 1.05},
+      "english": {"font_role": "latin", "size_points": 10.5, "color": "64748B", "space_after_points": 2.0, "line_spacing": 1.05, "left_indent_mm": 4.5},
+      "question": {"font_role": "hindi", "size_points": 11.5, "color": "000000", "space_after_points": 2.0, "line_spacing": 1.05},
+      "question_label": {"font_role": "latin", "size_points": 11.5, "bold": true, "color": "168873"},
+      "unit": {"font_role": "latin", "size_points": 14.0, "bold": true, "alignment": "center", "space_before_points": 2.0, "space_after_points": 4.0},
+      "chapter": {"font_role": "latin", "size_points": 14.0, "bold": true, "alignment": "center", "space_before_points": 2.0, "space_after_points": 4.0},
+      "question_type": {"font_role": "latin", "size_points": 11.5, "bold": true, "alignment": "center", "space_before_points": 5.0, "space_after_points": 5.0},
+      "equation": {"font_role": "math", "size_points": 11.5, "alignment": "center", "space_before_points": 3.0, "space_after_points": 3.0},
+      "option": {"font_role": "math", "size_points": 10.5, "space_after_points": 5.5},
+      "option_label": {"font_role": "latin", "size_points": 10.5, "bold": true, "color": "168873"},
+      "answer_line": {"font_role": "latin", "size_points": 9.0, "color": "168873", "space_after_points": 0.0, "line_spacing": 1.0}
+    },
+    "inline_math_points": 11.5,
+    "options": {
+      "table_indent_twips": 0,
+      "table_width_twips": 8640,
+      "two_column_widths_twips": [4320, 4320],
+      "four_inline_widths_twips": [2160, 2160, 2160, 2160],
+      "cell_margins_twips": {"top": 0, "right": 80, "bottom": 0, "left": 80},
+      "row_space_after_points": 5.5,
+      "max_two_column_visual_units": 52.0,
+      "max_four_inline_visual_units": 18.0
+    },
+    "answer_space": {
+      "default_pitch_points": 30.5,
+      "generous_pitch_points": 34.5,
+      "line_counts_by_marks": {"3": 7, "4": 9, "5": 11},
+      "border_color": "B7B7B7",
+      "border_size_eighth_points": 4,
+      "border_space_points": 1
+    },
+    "images": {
+      "formula_min_dpi": 300.0,
+      "technical_min_dpi": 300.0,
+      "decorative_min_dpi": 150.0
+    },
+    "qa": {
+      "render_authority": "libreoffice",
+      "minimum_text_points": 9.0,
+      "mcq_target_utilization_percent": [80.0, 95.0],
+      "warn_below_utilization_percent": 75.0,
+      "fail_below_utilization_percent": 60.0
+    }
+  }
+}

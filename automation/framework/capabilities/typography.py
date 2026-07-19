@@ -72,6 +72,13 @@ def missing_fonts(fonts: list[str], explicit_required: tuple[str, ...] = ()) -> 
         key = font.casefold()
         if key in installed or key in generic:
             continue
+        mappings = {
+            "宋体": "simsun",
+            "微软雅黑": "msyh",
+        }
+        mapped = mappings.get(key)
+        if mapped and (mapped in installed or mapped in generic):
+            continue
         if any(key in candidate or candidate in key for candidate in installed if len(candidate) > 4):
             continue
         missing.append(font)

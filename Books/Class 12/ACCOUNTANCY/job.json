@@ -1,0 +1,30 @@
+{
+  "job_id": "class-12-accountancy",
+  "class": "12",
+  "subject": "Accountancy",
+  "source": "Input/class_12_accountancy_reconstructed_paginated.docx",
+  "template": "../../../Book_Template_accountancy.docx",
+  "preview_output": "Preview/Class 12 Accountancy - Template Preview.docx",
+  "final_output": "Final/Class 12 Accountancy - Book Template.docx",
+  "approved_reference": null,
+  "qa_dir": "QA",
+  "preview_source_pages": 7,
+  "content_policy": "layout_only",
+  "typography_policy": "preserve_source",
+  "source_style_policy": "content_only",
+  "pagination_policy": "source_locked",
+  "subject_profile": "accountancy",
+  "adapter": null,
+  "required_fonts": [
+    "Calibri",
+    "Mangal",
+    "Times New Roman",
+    "SimSun"
+  ],
+  "pdf_font_map": {
+    "hindi": "Mangal",
+    "latin": "Calibri",
+    "math": "Times New Roman"
+  },
+  "layout_reference": "Input/class_12 _accountancy_Printable Reference.docx"
+}
