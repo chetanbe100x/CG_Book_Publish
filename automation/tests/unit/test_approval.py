@@ -52,7 +52,11 @@ class PreviewApprovalTests(unittest.TestCase):
             layout_ref.write_bytes(b"layout_bytes")
             replacements["layout_reference"] = layout_ref
             
-        return replace(base_job, **replacements)
+        job = replace(base_job, **replacements)
+        if job.prepared_source is not None:
+            job.prepared_source.parent.mkdir(parents=True, exist_ok=True)
+            job.prepared_source.write_bytes(b"prepared_bytes")
+        return job
 
     def test_full_gate_rejects_unapproved_and_changed_preview(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir_name:
@@ -69,6 +73,8 @@ class PreviewApprovalTests(unittest.TestCase):
                 "approved_source_sha256": sha256_file(job.source),
                 "approved_template_sha256": sha256_file(job.template),
             }
+            if job.prepared_source is not None:
+                approved["approved_prepared_source_sha256"] = sha256_file(job.prepared_source)
             if job.approved_reference is not None:
                 approved["approved_reference_sha256"] = sha256_file(job.approved_reference)
             if job.normalized_source is not None:
@@ -88,7 +94,7 @@ class PreviewApprovalTests(unittest.TestCase):
             ):
                 with self.assertRaises(IntegrityError):
                     store.require_approved_preview()
-
+ 
     def test_preview_qa_and_approval_are_bound_to_generation_inputs(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir_name:
             temp_dir = Path(temp_dir_name)
@@ -98,6 +104,8 @@ class PreviewApprovalTests(unittest.TestCase):
                 "source_sha256": sha256_file(job.source),
                 "template_sha256": sha256_file(job.template),
             }
+            if job.prepared_source is not None:
+                provenance["prepared_source_sha256"] = sha256_file(job.prepared_source)
             if job.layout_reference is not None:
                 provenance["layout_reference_sha256"] = sha256_file(job.layout_reference)
             if job.approved_reference is not None:

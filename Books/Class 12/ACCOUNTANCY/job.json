@@ -47,7 +47,11 @@
           {
             "hindi_start_pattern": ";a= dk ewY;|यंत्र का मूल्य",
             "english_start_pattern": "Plant will be appreciated",
-            "pair_count": 5
+            "pair_count": 5,
+            "hindi_start_index": 1140,
+            "hindi_end_index": 1146,
+            "english_start_index": 1149,
+            "english_end_index": 1155
           }
         ]
       }

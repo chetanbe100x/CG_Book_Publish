@@ -146,6 +146,11 @@ def create_preview(job: JobConfig) -> dict[str, Any]:
         preview_sha256=result["sha256"],
         source_sha256=sha256_file(job.source),
         template_sha256=sha256_file(job.template),
+        prepared_source_sha256=(
+            sha256_file(job.prepared_source)
+            if job.prepared_source is not None
+            else None
+        ),
         approved_reference_sha256=(
             sha256_file(job.approved_reference)
             if job.approved_reference is not None

@@ -293,8 +293,21 @@ class JobConfig:
             raise IntegrityError("Generated artifact paths must be distinct")
 
     @property
+    def work_dir(self) -> Path:
+        return self.source.parent.parent / "Work"
+
+    @property
+    def prepared_source(self) -> Path | None:
+        if self.source_type != "docx" or self.layout_reference is None:
+            return None
+        return self.work_dir / f"{self.source.stem}_prepared.docx"
+
+    @property
     def composition_source(self) -> Path:
         if self.source_type == "docx":
+            prepared = self.prepared_source
+            if prepared is not None:
+                return prepared
             return self.source
         assert self.normalized_source is not None
         if not self.normalized_source.is_file():
@@ -360,6 +373,9 @@ class JobConfig:
 
     def docx_for_stage(self, stage: str) -> Path:
         if stage == "source":
+            prepared = self.prepared_source
+            if prepared is not None:
+                return prepared
             return self.source
         if stage == "preview":
             return self.preview_output
@@ -408,6 +424,8 @@ class StatusStore:
             ("source", self.job.source),
             ("template", self.job.template),
         ]
+        if self.job.prepared_source is not None:
+            bindings.append(("prepared_source", self.job.prepared_source))
         if self.job.layout_reference is not None:
             bindings.append(("layout_reference", self.job.layout_reference))
         if self.job.approved_reference is not None:
@@ -442,6 +460,8 @@ class StatusStore:
         if current_hash != approved_hash:
             raise IntegrityError("Preview changed after approval")
         protected_inputs = [("source", self.job.source), ("template", self.job.template)]
+        if self.job.prepared_source is not None:
+            protected_inputs.append(("prepared_source", self.job.prepared_source))
         if self.job.layout_reference is not None:
             protected_inputs.append(("layout_reference", self.job.layout_reference))
         for label, path in protected_inputs:

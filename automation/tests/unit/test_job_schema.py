@@ -6,10 +6,15 @@ import unittest
 from pathlib import Path
 
 from framework.core.models import JobConfig
-from tests.conftest import discover_jobs, discover_profiles, all_chapter_patterns
+from tests.conftest import discover_jobs, discover_profiles, all_chapter_patterns, DISCOVERY_ERRORS
 
 
 class TestJobSchema(unittest.TestCase):
+    def test_discovery_errors(self) -> None:
+        """Malformed job.json or profile files must fail loudly."""
+        if DISCOVERY_ERRORS:
+            self.fail("Job/profile discovery errors:\n" + "\n".join(DISCOVERY_ERRORS))
+
     def test_all_jobs_parse_without_errors(self) -> None:
         """Every job.json loads through JobConfig.load() without FrameworkError."""
         jobs = discover_jobs()

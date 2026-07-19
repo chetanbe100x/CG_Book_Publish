@@ -10,7 +10,7 @@ from framework.core.compose import compose, create_full, create_preview
 from framework.core.models import FrameworkError, JobConfig, StatusStore, sha256_file
 from framework.ingest.extract import extract_book_ir_job
 from framework.ingest.pdf import ingest_pdf_job, validate_pdf_ingest_freshness
-from framework.ingest.reference import build_ingested_reference
+from framework.ingest.reference import build_ingested_reference, validate_prepared_reference
 from framework.qa.render import render_document
 from framework.qa.report import write_artifact, write_qa_report
 from framework.qa.structural import compare_with_approved, validate_output
@@ -29,6 +29,14 @@ def command_audit(job: JobConfig) -> dict:
     return result
 
 
+def command_prepare_reference(job: JobConfig) -> dict:
+    if job.source_type == "docx" and job.layout_reference is not None:
+        build_ingested_reference(job)
+        return {"status": "success", "prepared_source": str(job.prepared_source)}
+    else:
+        return {"status": "skipped", "reason": "No layout reference or not a DOCX job"}
+
+
 def command_preview(job: JobConfig) -> dict:
     ingested = False
     if job.source_type == "pdf":
@@ -39,8 +47,8 @@ def command_preview(job: JobConfig) -> dict:
         else:
             validate_pdf_ingest_freshness(job)
             
-    if job.layout_reference is not None:
-        build_ingested_reference(job)
+    if job.source_type == "docx" and job.layout_reference is not None:
+        validate_prepared_reference(job)
         
     if ingested or not job.audit_path.exists():
         command_audit(job)
@@ -156,6 +164,7 @@ def build_parser() -> argparse.ArgumentParser:
         "audit",
         "extract",
         "ingest",
+        "prepare-reference",
         "preview",
         "approve-preview",
         "full",
@@ -180,6 +189,8 @@ def main() -> int:
             result = extract_book_ir_job(job)
         elif args.command == "ingest":
             result = ingest_pdf_job(job)
+        elif args.command == "prepare-reference":
+            result = command_prepare_reference(job)
         elif args.command == "preview":
             result = command_preview(job)
         elif args.command == "qa":

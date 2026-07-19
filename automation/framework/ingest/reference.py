@@ -3,9 +3,10 @@ from __future__ import annotations
 import os
 import re
 import subprocess
+import json
+import hashlib
 from pathlib import Path
 from typing import Any
-import win32com.client
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
 from docx.oxml import OxmlElement
@@ -28,6 +29,10 @@ def run_git_checkout(file_path: Path) -> None:
 
 def run_word_pagination(doc_path: Path, output_path: Path) -> None:
     print(f"[reference] Running Word pagination on {doc_path.name}...")
+    try:
+        import win32com.client
+    except ImportError as e:
+        raise FrameworkError("Word pagination requires pywin32 (pip install pywin32)") from e
     word = None
     try:
         word = win32com.client.Dispatch("Word.Application")
@@ -441,26 +446,86 @@ def run_fake_pagination(source_path: Path, target_path: Path) -> None:
     doc.save(target_path)
     print(f"[reference] Saved final pagination doc to {target_path.name}")
 
+def validate_prepared_reference(job: JobConfig) -> None:
+    """Verify that prepared reference exists and matches current input hashes."""
+    prepared_path = job.prepared_source
+    if prepared_path is None:
+        return
+    if not prepared_path.is_file():
+        raise FrameworkError(
+            f"Prepared reference file is missing at: {prepared_path}. "
+            "Please run 'prepare-reference' command first."
+        )
+    state_file = job.qa_dir / "reference_ingest.state"
+    if not state_file.is_file():
+        raise FrameworkError(
+            "Prepared reference state is missing. Please run 'prepare-reference' command."
+        )
+    try:
+        stored_state = json.loads(state_file.read_text(encoding="utf-8"))
+        clean_source_path = job.source.parent / (job.source.name.replace("_reconstructed_paginated", ""))
+        current_state = {
+            "layout_reference_sha256": sha256_file(job.layout_reference),
+            "source_sha256": sha256_file(clean_source_path),
+            "chapter_integration_hash": hashlib.sha256(
+                json.dumps(job.chapter_integration, sort_keys=True).encode("utf-8")
+            ).hexdigest()
+        }
+        if (stored_state.get("layout_reference_sha256") != current_state["layout_reference_sha256"] or
+            stored_state.get("source_sha256") != current_state["source_sha256"] or
+            stored_state.get("chapter_integration_hash") != current_state["chapter_integration_hash"]):
+            raise FrameworkError(
+                "Prepared reference is stale. Please rerun 'prepare-reference' command."
+            )
+    except Exception as exc:
+        if isinstance(exc, FrameworkError):
+            raise
+        raise FrameworkError(f"Failed to validate prepared reference freshness: {exc}") from exc
+
+
 def build_ingested_reference(job: JobConfig) -> None:
     # 1. Derive original clean source path
-    raw_source_path = job.source.parent / (job.source.name.replace("_reconstructed_paginated", ""))
+    clean_source_path = job.source.parent / (job.source.name.replace("_reconstructed_paginated", ""))
     
-    # 2. Re-read layoute reference from config
+    # 2. Re-read layout reference from config
     layout_ref_path = job.layout_reference
     if not layout_ref_path or not layout_ref_path.is_file():
         raise FrameworkError(f"Layout reference not configured or not found: {layout_ref_path}")
         
     # Check freshness of layout reference to avoid redundant build
     state_file = job.qa_dir / "reference_ingest.state"
-    ref_sha = sha256_file(layout_ref_path)
-    if state_file.is_file() and state_file.read_text().strip() == ref_sha and job.source.is_file():
-        print(f"[reference] Ingested reference is already up-to-date with {layout_ref_path.name}. Skipping build.")
+    current_state = {
+        "layout_reference_sha256": sha256_file(layout_ref_path),
+        "source_sha256": sha256_file(clean_source_path),
+        "chapter_integration_hash": hashlib.sha256(
+            json.dumps(job.chapter_integration, sort_keys=True).encode("utf-8")
+        ).hexdigest()
+    }
+    
+    prepared_path = job.prepared_source
+    assert prepared_path is not None
+    is_fresh = False
+    if state_file.is_file() and prepared_path.is_file():
+        try:
+            stored_state = json.loads(state_file.read_text(encoding="utf-8"))
+            if (stored_state.get("layout_reference_sha256") == current_state["layout_reference_sha256"] and
+                stored_state.get("source_sha256") == current_state["source_sha256"] and
+                stored_state.get("chapter_integration_hash") == current_state["chapter_integration_hash"]):
+                is_fresh = True
+        except Exception:
+            pass
+            
+    if is_fresh:
+        print(f"[reference] Ingested reference is already up-to-date. Skipping build.")
         return
         
     print(f"[reference] Starting reference ingestion pipeline for subject: {job.subject}...")
     
-    # 3. Discard local edits on source file to start fresh
-    run_git_checkout(raw_source_path)
+    # 3. Copy clean source to work directory to start fresh (Input/ remains untouched)
+    raw_source_path = job.work_dir / clean_source_path.name
+    job.work_dir.mkdir(parents=True, exist_ok=True)
+    import shutil
+    shutil.copyfile(clean_source_path, raw_source_path)
     
     # 4. Integrate Chapters
     ref_doc = Document(layout_ref_path)
@@ -522,28 +587,24 @@ def build_ingested_reference(job: JobConfig) -> None:
                 # Pair matching lists (e.g. revaluation adjustments)
                 is_paired = False
                 for pair_cfg in bilingual_pairing:
-                    h_start = pair_cfg["hindi_start_pattern"]
-                    e_start = pair_cfg["english_start_pattern"]
                     p_count = pair_cfg["pair_count"]
+                    h_start_idx = pair_cfg.get("hindi_start_index")
+                    h_end_idx = pair_cfg.get("hindi_end_index")
+                    e_start_idx = pair_cfg.get("english_start_index")
+                    e_end_idx = pair_cfg.get("english_end_index")
                     
-                    # Convert to unicode representation to check regex match
-                    u_text = get_unicode_text(block)
-                    
-                    # Check start matches
-                    # We look at raw p_idx inside reference range
-                    # Let's map it via indices to Hindi adjustments prompt index (1140)
-                    if 1140 <= p_idx <= 1146:
+                    if h_start_idx is not None and h_end_idx is not None and h_start_idx <= p_idx <= h_end_idx:
                         hindi_adjustments.append((block, p_idx))
                         is_paired = True
                         break
-                    elif 1149 <= p_idx <= 1155:
+                    elif e_start_idx is not None and e_end_idx is not None and e_start_idx <= p_idx <= e_end_idx:
                         english_adjustments.append((block, p_idx))
                         is_paired = True
-                        if p_idx == 1155:
+                        if p_idx == e_end_idx:
                             print("[reference] Pairing bilingual adjustments...")
                             convert_paragraph_to_unicode(hindi_adjustments[0][0], temp_doc)
                             convert_paragraph_to_unicode(english_adjustments[0][0], temp_doc)
-                            for k in range(1, 6):
+                            for k in range(1, p_count + 1):
                                 q_counter += 1
                                 h_p = hindi_adjustments[k][0]
                                 e_p = english_adjustments[k][0]
@@ -560,8 +621,8 @@ def build_ingested_reference(job: JobConfig) -> None:
                                 dest_p2.paragraph_format.left_indent = e_p.paragraph_format.left_indent
                                 convert_runs_to_unicode(e_p, dest_p2)
                                 
-                            convert_paragraph_to_unicode(hindi_adjustments[6][0], temp_doc)
-                            convert_paragraph_to_unicode(english_adjustments[6][0], temp_doc)
+                            convert_paragraph_to_unicode(hindi_adjustments[p_count + 1][0], temp_doc)
+                            convert_paragraph_to_unicode(english_adjustments[p_count + 1][0], temp_doc)
                         break
                         
                 if is_paired:
@@ -641,10 +702,10 @@ def build_ingested_reference(job: JobConfig) -> None:
         reconstructed_doc.save(reconstructed_path)
         print(f"[reference] Table of Contents added to {reconstructed_path.name}")
         
-    # 8. Run Fake Pagination (generating job.source)
-    run_fake_pagination(reconstructed_path, job.source)
+    # 8. Run Fake Pagination (generating job.prepared_source)
+    run_fake_pagination(reconstructed_path, job.prepared_source)
     
-    # Write reference ingest state SHA to skip next runs if unchanged
+    # Write reference ingest state JSON to skip next runs if unchanged
     state_file.parent.mkdir(parents=True, exist_ok=True)
-    state_file.write_text(ref_sha)
+    state_file.write_text(json.dumps(current_state, indent=2), encoding="utf-8")
     print("[reference] Reference layout ingestion pipeline successfully completed!")

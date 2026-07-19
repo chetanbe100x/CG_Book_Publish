@@ -7,6 +7,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 BOOKS_DIR = PROJECT_ROOT / "Books"
 PROFILES_DIR = PROJECT_ROOT / "automation" / "framework" / "profiles"
 
+DISCOVERY_ERRORS: list[str] = []
+
 def discover_jobs() -> list[tuple[str, dict, Path]]:
     """Scan Books/ tree, yield (job_id, raw_json, job_json_path) for each registered book."""
     jobs = []
@@ -17,8 +19,10 @@ def discover_jobs() -> list[tuple[str, dict, Path]]:
                 job_id = data.get("job_id")
                 if job_id:
                     jobs.append((str(job_id), data, p))
-            except Exception:
-                pass
+                else:
+                    DISCOVERY_ERRORS.append(f"Job file {p} is missing 'job_id'")
+            except Exception as exc:
+                DISCOVERY_ERRORS.append(f"Job file {p} failed to load: {exc}")
     return jobs
 
 def discover_profiles() -> list[tuple[str, dict]]:
@@ -29,8 +33,8 @@ def discover_profiles() -> list[tuple[str, dict]]:
             try:
                 data = json.loads(p.read_text(encoding="utf-8"))
                 profiles.append((p.name[:-5], data))
-            except Exception:
-                pass
+            except Exception as exc:
+                DISCOVERY_ERRORS.append(f"Profile {p} failed to load: {exc}")
     return profiles
 
 def all_required_fonts() -> set[str]:
