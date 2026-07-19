@@ -74,6 +74,9 @@ class JobConfig:
     render_authority: str = "libreoffice"
     source_style_policy: str = "source_authority"
     pagination_policy: str = "source_locked"
+    chapter_integration: dict = field(default_factory=dict)
+    chapter_structure: dict = field(default_factory=dict)
+    toc: dict = field(default_factory=dict)
 
     @staticmethod
     def load(manifest_path: str | Path) -> "JobConfig":
@@ -152,6 +155,9 @@ class JobConfig:
             render_authority=str(data.get("render_authority", "libreoffice")),
             source_style_policy=str(data.get("source_style_policy", "source_authority")),
             pagination_policy=str(data.get("pagination_policy", "source_locked")),
+            chapter_integration=data.get("chapter_integration", {}),
+            chapter_structure=data.get("chapter_structure", {}),
+            toc=data.get("toc", {}),
         )
         job.validate()
         return job

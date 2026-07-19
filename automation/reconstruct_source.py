@@ -9,6 +9,8 @@ from docx.oxml.ns import qn
 from docx.text.paragraph import Paragraph
 from docx.table import Table
 
+from framework.capabilities.legacy_fonts import convert_table_runs
+
 def iter_block_members(parent):
     parent_elm = parent.element.body if (hasattr(parent, "element") and hasattr(parent.element, "body")) else parent._tc
     for child in parent_elm.iterchildren():
@@ -20,48 +22,9 @@ def iter_block_members(parent):
 def copy_table_element(src_table, dest_doc):
     tbl_clone = copy.deepcopy(src_table._tbl)
     
-    ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
-    # Apply fonts and cantSplit properties
-    for r in tbl_clone.findall(".//w:r", namespaces=ns):
-        text_nodes = r.findall("w:t", namespaces=ns)
-        if text_nodes:
-            text_val = "".join([t.text for t in text_nodes if t.text])
-            is_hindi = any(ord(char) > 127 for char in text_val)
-            
-            rPr = r.get_or_add_rPr()
-            
-            sz = rPr.find("w:sz", namespaces=ns)
-            if sz is None:
-                sz = OxmlElement("w:sz")
-                rPr.append(sz)
-            sz.set(qn("w:val"), "23" if is_hindi else "21")
-            
-            szCs = rPr.find("w:szCs", namespaces=ns)
-            if szCs is None:
-                szCs = OxmlElement("w:szCs")
-                rPr.append(szCs)
-            szCs.set(qn("w:val"), "23" if is_hindi else "21")
-            
-            rFonts = rPr.find("w:rFonts", namespaces=ns)
-            if rFonts is None:
-                rFonts = OxmlElement("w:rFonts")
-                rPr.append(rFonts)
-            if is_hindi:
-                rFonts.set(qn("w:hint"), "default")
-                rFonts.set(qn("w:ascii"), "Mangal")
-                rFonts.set(qn("w:hAnsi"), "Mangal")
-                rFonts.set(qn("w:cs"), "Mangal")
-            else:
-                rFonts.set(qn("w:hint"), "default")
-                rFonts.set(qn("w:ascii"), "Times New Roman")
-                rFonts.set(qn("w:hAnsi"), "Times New Roman")
-                rFonts.set(qn("w:cs"), "Times New Roman")
-                
-    for tr in tbl_clone.findall(".//w:tr", namespaces=ns):
-        trPr = tr.get_or_add_trPr()
-        if trPr.find("w:cantSplit", namespaces=ns) is None:
-            trPr.append(OxmlElement("w:cantSplit"))
-            
+    # Apply framework table runs translation
+    convert_table_runs(tbl_clone)
+    
     dest_doc.element.body.append(tbl_clone)
 
 

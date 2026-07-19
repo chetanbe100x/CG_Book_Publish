@@ -26,5 +26,110 @@
     "latin": "Calibri",
     "math": "Times New Roman"
   },
-  "layout_reference": "Input/class_12 _accountancy_Printable Reference.docx"
+  "layout_reference": "Input/class_12 _accountancy_Printable Reference.docx",
+  "chapter_integration": {
+    "chapters": [
+      {
+        "name": "Chapter 2: Goodwill",
+        "ref_start_pattern": "\\[;kfr.*izd`fr|Goodwill.*Nature|ख्याति",
+        "ref_end_pattern": "Reconstitution|iquxZBu|साझेदारी का पुनर्गठन",
+        "insert_before_pattern": "साझेदार का प्रवेश|Admission of a Partner",
+        "unified_title": "अध्याय 2: ख्याति - प्रकृति एवं मूल्यांकन (Chapter 2: Goodwill - Nature and its Valuation)",
+        "bilingual_pairing": []
+      },
+      {
+        "name": "Chapter 3: Reconstitution",
+        "ref_start_pattern": "iquxZBu|Reconstitution.*Change|साझेदारी का पुनर्गठन",
+        "ref_end_pattern": "n;s\\s*dk\\s*izos'k|Admission of new Partner|नये साझेदार का प्रवेश",
+        "insert_before_pattern": "साझेदार का प्रवेश|Admission of a Partner",
+        "unified_title": "अध्याय 3: साझेदारी का पुनर्गठन - विद्यमान साझेदारों के लाभ-हानि अनुपातों में परिवर्तन (Chapter 3: Reconstitution of Partnership – Change in profit sharing ratio among the existing partners)",
+        "bilingual_pairing": [
+          {
+            "hindi_start_pattern": ";a= dk ewY;|यंत्र का मूल्य",
+            "english_start_pattern": "Plant will be appreciated",
+            "pair_count": 5
+          }
+        ]
+      }
+    ]
+  },
+  "chapter_structure": {
+    "logical_order": [
+      {"match": "रोकड़.*प्रवाह|Cash Flow", "insert_before_pattern": "भाग-ब|Part B"}
+    ],
+    "heading_unification": [
+      {
+        "match_pattern": "साझेदारी लेखांकन.*आधारभूत|Partnership Accounts.*Basic",
+        "unified_text": "अध्याय 1: साझेदारी लेखांकन - आधारभूत अवधारणाएं (Chapter 1: Partnership Accounts - Basic Concepts)"
+      },
+      {
+        "match_pattern": "साझेदारी फर्म का पुनर्गठन.*प्रवेश|Reconstitution.*Admission",
+        "unified_text": "अध्याय 4: साझेदारी फर्म का पुनर्गठन – साझेदार का प्रवेश (Chapter 4: Reconstitution of a Partnership Firm – Admission of a Partner)",
+        "clear_pattern": "Admission of a Partner|Chapter 2: Reconstitution of a Partnership"
+      },
+      {
+        "match_pattern": "अवकाश.*मृत्यु|Retirement.*Death",
+        "unified_text": "अध्याय 5: साझेदारी का पुनर्गठन - साझेदार का अवकाश ग्रहण एवं मृत्यु (Chapter 5: Reconstitution of a Partnership Firm – Retirement and Death of a Partner)",
+        "clear_pattern": "Retirement and Death of a Partner|Chapter 3: Reconstitution of a Partnership"
+      },
+      {
+        "match_pattern": "विघटन",
+        "unified_text": "अध्याय 6: साझेदारी फर्म का विघटन (Chapter 6: Dissolution of a Partnership Firm)",
+        "clear_pattern": "Dissolution"
+      },
+      {
+        "match_pattern": "अंशपूंजी",
+        "unified_text": "अध्याय 7: अंशपूंजी के लिए लेखांकन (Chapter 7: Accounting for Share Capital)",
+        "clear_pattern": "Share Capital"
+      },
+      {
+        "match_pattern": "ऋणपत्र",
+        "unified_text": "अध्याय 8: ऋणपत्रों का निर्गम एवं मोचन (Chapter 8: Issue and Redemption of Debentures)",
+        "clear_pattern": "Debentures"
+      },
+      {
+        "match_pattern": "कंपनी के वित्तीय विवरण",
+        "unified_text": "अध्याय 9: कंपनी के वित्तीय विवरण (Chapter 9: Financial Statement of a Company)",
+        "clear_pattern": "Financial Statement"
+      },
+      {
+        "match_pattern": "लेखांकन अनुपात|Accounting Ratio",
+        "unified_text": "अध्याय 10: लेखांकन अनुपात (Chapter 10: Financial Statement Analysis and Accounting Ratio)"
+      },
+      {
+        "match_pattern": "रोकड़.*प्रवाह|Cash Flow",
+        "unified_text": "अध्याय 11: रोकड़ प्रवाह विवरण (Chapter 11: Cash Flow Statement)"
+      },
+      {
+        "match_pattern": "कम्प्यूटरीकृत.*लेखांकन|Computerised.*Accounting",
+        "unified_text": "भाग-ब: कम्प्यूटरीकृत लेखांकन (Part B: Computerized Accounting)"
+      },
+      {
+        "match_pattern": "लेखा प्रणाली का अवलोकन|Overview.*Accounting",
+        "unified_text": "अध्याय 1: कम्प्यूटरीकृत लेखा प्रणाली का अवलोकन (Chapter 1: Overview of Computerised Accounting System)"
+      },
+      {
+        "match_pattern": "लेखा प्रणाली का उपयोग|Use of.*Accounting",
+        "unified_text": "अध्याय 2: कम्प्यूटरीकृत लेखा प्रणाली का उपयोग (Chapter 2: Use of Computerised Accounting System)"
+      },
+      {
+        "match_pattern": "डेटाबेस",
+        "unified_text": "अध्याय 3: डेटाबेस प्रबंधन प्रणाली (DBMS) का उपयोग करके लेखांकन (Chapter 3: Accounting Using a Database Management System (DBMS))",
+        "clear_pattern": "Database Management|DBMS"
+      },
+      {
+        "match_pattern": "स्प्रेडशीट|Spreadsheet",
+        "unified_text": "अध्याय 4: इलेक्ट्रॉनिक स्प्रेडशीट के लेखांकन अनुप्रयोग (Chapter 4: Spreadsheet Applications in Accounting)"
+      }
+    ]
+  },
+  "toc": {
+    "enabled": true,
+    "title": "विषय सूची (Table of Contents)",
+    "title_font": "Mangal",
+    "title_size_pt": 16,
+    "link_font": "Mangal",
+    "link_size_pt": 12,
+    "link_color": "0563C1"
+  }
 }

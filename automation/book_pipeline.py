@@ -10,6 +10,7 @@ from framework.core.compose import compose, create_full, create_preview
 from framework.core.models import FrameworkError, JobConfig, StatusStore, sha256_file
 from framework.ingest.extract import extract_book_ir_job
 from framework.ingest.pdf import ingest_pdf_job, validate_pdf_ingest_freshness
+from framework.ingest.reference import build_ingested_reference
 from framework.qa.render import render_document
 from framework.qa.report import write_artifact, write_qa_report
 from framework.qa.structural import compare_with_approved, validate_output
@@ -37,6 +38,10 @@ def command_preview(job: JobConfig) -> dict:
             ingested = True
         else:
             validate_pdf_ingest_freshness(job)
+            
+    if job.layout_reference is not None:
+        build_ingested_reference(job)
+        
     if ingested or not job.audit_path.exists():
         command_audit(job)
     return create_preview(job)
