@@ -103,11 +103,13 @@ def KrutiDev_to_Unicode(krutidev_substring: str) -> str:
     
     return modified_substring
 
+LEGACY_PREFIXES = ("kruti", "devlys", "kundli", "walkman chanakya", "shusha", "ams")
+
 def is_legacy_font(font_name: str | None) -> bool:
     if not font_name:
         return False
-    fn = font_name.lower()
-    return "kruti" in fn or "dev" in fn or "kundli" in fn
+    fn = font_name.strip().lower()
+    return any(fn.startswith(prefix) for prefix in LEGACY_PREFIXES)
 
 def convert_runs_to_unicode(src_paragraph, dest_paragraph, target_font: str = "Mangal") -> None:
     for run in src_paragraph.runs:

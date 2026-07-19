@@ -387,6 +387,27 @@ class PrintQaIntegrationTests(unittest.TestCase):
             with self.assertRaisesRegex(FrameworkError, "page-count mismatch"):
                 render._render_with_word(job, "preview")
 
+    def test_pdf_layout_analysis_works_for_all_font_maps(self) -> None:
+        """For every job with a pdf_font_map, run the fake-page analysis to verify no key errors on font role lookups."""
+        from tests.conftest import all_font_maps
+        page = _FakePage(
+            words=[self._word(text="Test")],
+        )
+        for job_id, font_map in all_font_maps():
+            with self.subTest(job_id=job_id):
+                job = replace(
+                    self._job(page_type="mcq"),
+                    job_id=f"test-qa-{job_id}",
+                    pdf_font_map=tuple(sorted((str(k), str(v)) for k, v in font_map.items())),
+                )
+                try:
+                    result = self._analyze(job, page)
+                    self.assertIsInstance(result, dict)
+                    self.assertIn("passed", result)
+                    self.assertIn("errors", result)
+                except Exception as exc:
+                    self.fail(f"analyze_word_pdf failed or crashed for job {job_id!r} font map: {exc}")
+
 
 class JobConfigPrintFieldsTests(unittest.TestCase):
     def setUp(self) -> None:

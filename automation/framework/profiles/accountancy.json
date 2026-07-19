@@ -1,4 +1,5 @@
 {
+  "schema_version": 1,
   "profile": "accountancy",
   "audit_hints": [
     "ledger and dense table geometry",

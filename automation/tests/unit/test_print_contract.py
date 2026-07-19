@@ -211,7 +211,24 @@ class PrintContractTests(unittest.TestCase):
         self.assertFalse(result["passed"])
         self.assertIn("Dotted answer lines also use tab leaders", result["errors"])
 
+    def test_print_contract_loads_for_all_job_configurations(self) -> None:
+        """For every discovered job, verify that validate_print_contract() can be invoked without crashing."""
+        from tests.conftest import discover_jobs
+        jobs = discover_jobs()
+        self.assertGreater(len(jobs), 0, "No jobs discovered.")
+        for job_id, _, path in jobs:
+            with self.subTest(job_id=job_id):
+                try:
+                    job = JobConfig.load(path)
+                    result = validate_print_contract(
+                        job, self._package(), stage="preview", source_pages=2
+                    )
+                    self.assertIsInstance(result, dict)
+                    self.assertIn("passed", result)
+                    self.assertIn("errors", result)
+                except Exception as exc:
+                    self.fail(f"validate_print_contract failed or crashed for job {job_id!r}: {exc}")
+
 
 if __name__ == "__main__":
     unittest.main()
-

@@ -145,7 +145,7 @@ def command_regression(job: JobConfig) -> dict:
         "regression": regression,
     }
     if not validation["passed"] or not regression["passed"]:
-        raise FrameworkError("Class 12 Maths regression failed")
+        raise FrameworkError(f"{job.job_id} regression failed")
     return result
 
 

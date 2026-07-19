@@ -597,8 +597,10 @@ def build_ingested_reference(job: JobConfig) -> None:
     relocate_chapter(target_doc, "रोकड़.*प्रवाह|Cash Flow", "भाग-ब|Part B")
     
     # Unify target document headings
+    font_map = dict(job.pdf_font_map)
+    target_font = font_map.get("hindi", "Mangal")
     heading_unifications = struct_cfg.get("heading_unification", [])
-    unify_headings(target_doc, heading_unifications)
+    unify_headings(target_doc, heading_unifications, target_font=target_font)
     
     # Insert new chapters into target_doc
     insertion_pat = resolved_chapters[0]["insert_before_pattern"]

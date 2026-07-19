@@ -364,7 +364,8 @@ class PdfIngestionTests(unittest.TestCase):
                 cell.get("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}w")
                 for cell in body.findall(".//w:tc/w:tcPr/w:tcW", NS)
             ]
-            self.assertIn("4320", widths)
+            from framework.core.layout import load_print_layout
+            self.assertIn(str(load_print_layout(job.subject_profile).options.two_column_widths_twips[0]), widths)
             self.assertEqual(
                 len(body.findall(".//w:pBdr/w:bottom", NS)),
                 2,

@@ -1,4 +1,5 @@
 {
+  "schema_version": 1,
   "profile": "language",
   "audit_hints": [
     "legacy and complex-script fonts",

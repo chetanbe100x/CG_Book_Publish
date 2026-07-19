@@ -34,6 +34,70 @@ class PrintLayoutProfileTests(unittest.TestCase):
         self.assertEqual(profile.answer_space.generous_pitch_points, 27.0)
         self.assertEqual(profile.images.formula_min_dpi, 300.0)
 
+    def test_all_profiles_load_successfully(self) -> None:
+        """For every profile in profiles/, call load_print_layout() and assert no error."""
+        from tests.conftest import discover_profiles
+        profiles = discover_profiles()
+        self.assertGreater(len(profiles), 0, "No profiles discovered.")
+        for name, _ in profiles:
+            with self.subTest(profile=name):
+                try:
+                    profile = load_print_layout(name)
+                    self.assertEqual(profile.name, name)
+                except Exception as exc:
+                    self.fail(f"Failed to load print layout for profile {name!r}: {exc}")
+
+    def test_all_profiles_have_required_style_keys(self) -> None:
+        """For every loaded profile, assert all 12 required style roles exist with valid values."""
+        from tests.conftest import discover_profiles
+        required_roles = (
+            "body", "hindi", "english", "question", "question_label",
+            "unit", "chapter", "question_type", "equation", "option",
+            "option_label", "answer_line"
+        )
+        for name, data in discover_profiles():
+            if "print_layout" not in data:
+                continue  # Skip stubs
+            with self.subTest(profile=name):
+                profile = load_print_layout(name)
+                for role in required_roles:
+                    with self.subTest(role=role):
+                        try:
+                            style = profile.style(role)
+                            self.assertIsNotNone(style)
+                        except Exception as exc:
+                            self.fail(f"Profile {name!r} is missing style role {role!r}: {exc}")
+
+    def test_all_profiles_page_geometry_is_physically_valid(self) -> None:
+        """Assert width = inside_margin + outside_margin + live_body_width (within 0.2mm tolerance) for every profile."""
+        from tests.conftest import discover_profiles
+        for name, data in discover_profiles():
+            if "print_layout" not in data:
+                continue  # Skip stubs
+            with self.subTest(profile=name):
+                profile = load_print_layout(name)
+                total_width = profile.page.inside_margin_mm + profile.page.outside_margin_mm + profile.page.live_body_width_mm
+                self.assertAlmostEqual(
+                    profile.page.width_mm,
+                    total_width,
+                    delta=0.2,
+                    msg=f"Profile {name!r} layout width does not match margin + body width sum",
+                )
+
+    def test_profiles_referenced_by_jobs_exist(self) -> None:
+        """For every subject_profile in every job.json, assert a matching profile JSON exists and loads."""
+        from tests.conftest import discover_jobs, discover_profiles
+        profiles = {name for name, _ in discover_profiles()}
+        jobs = discover_jobs()
+        for job_id, data, _ in jobs:
+            subject_profile = data.get("subject_profile", "science")
+            with self.subTest(job_id=job_id, subject_profile=subject_profile):
+                self.assertIn(
+                    subject_profile,
+                    profiles,
+                    f"Job {job_id!r} references missing subject profile {subject_profile!r}",
+                )
+
     def test_formula_width_controls_safe_option_grid_fallback(self) -> None:
         profile = load_print_layout("maths")
         block = {

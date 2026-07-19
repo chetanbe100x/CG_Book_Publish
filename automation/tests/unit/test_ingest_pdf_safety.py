@@ -53,6 +53,30 @@ class PdfIngestSafetyTests(unittest.TestCase):
             ),
         )
 
+    def test_all_font_maps_have_required_roles(self) -> None:
+        """For every job with pdf_font_map, assert hindi, latin, math roles are present."""
+        from tests.conftest import all_font_maps
+        for job_id, font_map in all_font_maps():
+            with self.subTest(job_id=job_id):
+                for role in ("hindi", "latin", "math"):
+                    self.assertIn(
+                        role,
+                        font_map,
+                        f"pdf_font_map in job {job_id!r} is missing required role {role!r}",
+                    )
+
+    def test_all_required_fonts_lists_are_non_empty_when_declared(self) -> None:
+        """For every job with required_fonts, assert each font name is non-empty and not whitespace."""
+        from tests.conftest import discover_jobs
+        for job_id, data, _ in discover_jobs():
+            required_fonts = data.get("required_fonts", [])
+            for font in required_fonts:
+                with self.subTest(job_id=job_id, font=font):
+                    self.assertTrue(
+                        isinstance(font, str) and font.strip(),
+                        f"Job {job_id!r} has empty or invalid font name in required_fonts: {font!r}",
+                    )
+
     def test_required_fonts_are_checked_before_generation(self) -> None:
         job = JobConfig(
             manifest_path=Path("job.json"),

@@ -1,9 +1,80 @@
 {
+  "schema_version": 1,
   "profile": "science",
   "audit_hints": [
     "OMML equations",
     "symbols and superscript/subscript formatting",
     "VML, drawings, diagrams and captions",
     "question numbering and answer lines"
-  ]
+  ],
+  "preferred_preview_features": [
+    "bilingual_questions",
+    "multiple_choice_options",
+    "equations",
+    "technical_figures",
+    "answer_space",
+    "tables"
+  ],
+  "pdf_font_roles": {
+    "hindi": "Nirmala UI",
+    "latin": "Arial",
+    "math": "Cambria Math"
+  },
+  "print_layout": {
+    "page": {
+      "width_mm": 210.0,
+      "height_mm": 297.0,
+      "live_body_width_mm": 170.0,
+      "inside_margin_mm": 22.0,
+      "outside_margin_mm": 18.0,
+      "top_content_mm": 28.5,
+      "bottom_content_mm": 266.5,
+      "first_content_side": "recto"
+    },
+    "styles": {
+      "body": {"font_role": "latin", "size_points": 16.0, "color": "000000", "space_after_points": 4.0, "line_spacing": 1.15},
+      "hindi": {"font_role": "hindi", "size_points": 16.0, "color": "000000", "space_after_points": 4.0, "line_spacing": 1.15},
+      "english": {"font_role": "latin", "size_points": 16.0, "color": "000000", "space_after_points": 6.0, "line_spacing": 1.15, "left_indent_mm": 0.0},
+      "question": {"font_role": "hindi", "size_points": 16.0, "color": "000000", "space_after_points": 4.0, "line_spacing": 1.15},
+      "question_label": {"font_role": "latin", "size_points": 14.0, "bold": true, "color": "764673"},
+      "unit": {"font_role": "hindi", "size_points": 24.0, "bold": true, "color": "764673", "alignment": "center", "space_before_points": 2.0, "space_after_points": 6.0, "line_spacing": 1.1},
+      "chapter": {"font_role": "hindi", "size_points": 24.0, "bold": true, "color": "764673", "alignment": "center", "space_before_points": 2.0, "space_after_points": 8.0, "line_spacing": 1.1},
+      "question_type": {"font_role": "hindi", "size_points": 16.0, "bold": true, "color": "000000", "alignment": "left", "space_before_points": 8.0, "space_after_points": 10.0, "line_spacing": 1.1},
+      "equation": {"font_role": "math", "size_points": 16.0, "color": "000000", "alignment": "center", "space_before_points": 3.0, "space_after_points": 6.0, "line_spacing": 1.05},
+      "option": {"font_role": "math", "size_points": 16.0, "color": "000000", "space_after_points": 8.0, "line_spacing": 1.1},
+      "option_label": {"font_role": "latin", "size_points": 14.0, "bold": true, "color": "764673"},
+      "answer_line": {"font_role": "latin", "size_points": 10.0, "color": "764673", "space_after_points": 0.0, "line_spacing": 1.0}
+    },
+    "inline_math_points": 16.0,
+    "options": {
+      "table_indent_twips": 420,
+      "table_width_twips": 9220,
+      "two_column_widths_twips": [4700, 4520],
+      "four_inline_widths_twips": [2305, 2305, 2305, 2305],
+      "cell_margins_twips": {"top": 0, "right": 100, "bottom": 0, "left": 80},
+      "row_space_after_points": 8.0,
+      "max_two_column_visual_units": 36.0,
+      "max_four_inline_visual_units": 14.0
+    },
+    "answer_space": {
+      "default_pitch_points": 24.0,
+      "generous_pitch_points": 27.0,
+      "line_counts_by_marks": {"1": 2, "2": 4, "3": 7, "4": 9, "5": 11, "6": 14},
+      "border_color": "764673",
+      "border_size_eighth_points": 4,
+      "border_space_points": 1
+    },
+    "images": {
+      "formula_min_dpi": 300.0,
+      "technical_min_dpi": 300.0,
+      "decorative_min_dpi": 150.0
+    },
+    "qa": {
+      "render_authority": "word",
+      "minimum_text_points": 10.0,
+      "mcq_target_utilization_percent": [82.0, 95.0],
+      "warn_below_utilization_percent": 75.0,
+      "fail_below_utilization_percent": 60.0
+    }
+  }
 }

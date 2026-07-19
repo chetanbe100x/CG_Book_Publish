@@ -1,4 +1,5 @@
 {
+  "schema_version": 1,
   "profile": "humanities",
   "audit_hints": [
     "maps and linked images",

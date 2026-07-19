@@ -67,7 +67,7 @@ def relocate_chapter(doc: Document, chapter_match_pattern: str, insert_before_pa
     safe_insert = insert_before_pattern.encode('ascii', errors='backslashreplace').decode('ascii')
     print(f"[chapter_structure] Relocated chapter matching '{safe_match}' before '{safe_insert}'.")
 
-def unify_headings(doc: Document, heading_unification_config: list[dict]) -> None:
+def unify_headings(doc: Document, heading_unification_config: list[dict], target_font: str = "Mangal") -> None:
     paragraphs = doc.paragraphs
     i = 0
     while i < len(paragraphs):
@@ -97,7 +97,7 @@ def unify_headings(doc: Document, heading_unification_config: list[dict]) -> Non
                 p.paragraph_format.keep_with_next = True
                 for run in p.runs:
                     run.bold = True
-                    run.font.name = "Mangal"
+                    run.font.name = target_font
                     
             elif clear_pattern and re.search(clear_pattern, norm, re.IGNORECASE):
                 p.text = ""

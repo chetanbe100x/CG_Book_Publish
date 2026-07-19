@@ -8,6 +8,7 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
 from ..capabilities.legacy_fonts import is_legacy_font, KrutiDev_to_Unicode, convert_runs_to_unicode, convert_table_runs
+from ..core.models import FrameworkError
 
 def iter_block_members(parent):
     parent_elm = parent.element.body if (hasattr(parent, "element") and hasattr(parent.element, "body")) else parent._tc
@@ -78,7 +79,7 @@ def detect_insertion_point(target_doc: Document, insert_before_pattern: str) -> 
         # Find chapter matching the pattern
         if re.search(insert_before_pattern, text, re.IGNORECASE):
             return idx
-    return 181  # Fallback to the original hardcoded index if not found
+    raise FrameworkError(f"Insertion point pattern '{insert_before_pattern}' was not found in target document.")
 
 def filter_separator_lines(text: str) -> bool:
     text_strip = text.strip()
